@@ -1,24 +1,27 @@
 html {
     body {
-        background-color: #49346A;
+
+        background-color: #181818;
 
         @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap');
 
+        p {
+            margin: 10px 0;
+        }
+
         #app {
-            max-width: 600px;
+            background-color: #49346A;
+            width: 100%;
             margin: 0 auto;
             padding: 20px;
-            text-align: center;
 
             color: white;
             font-family: 'Source Sans Pro', sans-serif;
-            min-height: 100vh;
             box-sizing: border-box;
 
             .logo {
                 width: 200px;
                 margin-bottom: 20px;
-                margin: 0 auto;
             }
 
             h1 {
@@ -28,10 +31,12 @@ html {
 
             textarea {
                 width: 100%;
+                max-width: 500px;
                 height: 150px;
                 margin-bottom: 20px;
                 font-size: 1.2em;
                 padding: 10px;
+                font-family: "Courier New";
             }
 
             input {
@@ -58,6 +63,16 @@ html {
                 font-size: 2em;
             }
 
+        }
+
+        footer {
+            padding: 40px;
+            color: #fff;
+            font-size: 14px;
+
+            a {
+                color: #fff;
+            }
         }
 
     }
