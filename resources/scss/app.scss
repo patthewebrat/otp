@@ -3,7 +3,7 @@ html {
 
         background-color: #181818;
 
-        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
 
         p {
             margin: 10px 0;
@@ -16,7 +16,7 @@ html {
             padding: 20px;
 
             color: white;
-            font-family: 'Source Sans Pro', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             box-sizing: border-box;
 
             .logo {
@@ -44,6 +44,10 @@ html {
                 width: 50px;
             }
 
+            select {
+                padding: 5px;
+            }
+
             button {
                 margin-top: 20px;
                 padding: 10px 20px;
@@ -61,6 +65,60 @@ html {
             .display-password {
                 display: block;
                 font-size: 2em;
+            }
+
+            .generated-url {
+
+                cursor: pointer;
+
+                .password-link {
+                    background-color: #fff;
+                    display: block;
+                    color: #333;
+                    padding: 20px 20px;
+                    margin: 20px 0;
+                    font-family: "Courier New";
+                    max-width: 1080px;
+                    white-space: nowrap;
+                    position: relative;
+
+                    button {
+                        margin: 0 0 0 10px;
+                        position: absolute;
+                        right: 0px;
+                        top: 10px;
+                        background-color: #fff;
+                    }
+
+                }
+            }
+
+
+
+            .copy-icon {
+                background: none;
+                border: none;
+                cursor: pointer;
+                margin-left: 8px;
+                font-size: 1.2em;
+                color: #49346A;
+
+                &:focus {
+                    outline: none;
+                }
+
+                i {
+                    transition: color 0.3s;
+                }
+
+                i.fa-check {
+                    color: green;
+                }
+            }
+
+            .copy-success {
+                color: green;
+                margin-top: 8px;
             }
 
         }

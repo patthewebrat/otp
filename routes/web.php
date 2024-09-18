@@ -2,6 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/otp', function () {
+Route::get('/', function () {
     return view('otp');
 });

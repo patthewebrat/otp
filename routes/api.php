@@ -8,6 +8,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/otp/create', [OTPController::class, 'create']);
-Route::get('/otp/{combinedKey}', [OTPController::class, 'show']);
-Route::get('/otp/check/{combinedKey}', [OTPController::class, 'check']);
+Route::post('/create', [OTPController::class, 'create']);
+Route::get('/{combinedKey}', [OTPController::class, 'show']);
+Route::get('/check/{combinedKey}', [OTPController::class, 'check']);
