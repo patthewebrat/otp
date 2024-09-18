@@ -1,6 +1,5 @@
 <template>
     <div id="app" v-cloak>
-
         <h1>Securely share a password</h1>
 
         <div v-if="state === 'loading'">
@@ -27,24 +26,22 @@
             <button @click="submitPassword">Submit</button>
         </div>
 
-        <div v-else-if="state === 'generated'" @click="copyToClipboard(generatedUrl)" class="generated-url">
+        <div v-else-if="state === 'generated'" class="generated-url">
             <p>
                 Your one-time password link is displayed below. Click the link to save it to your clipboard:
                 <span class="password-link">
-                    <a>
+                    <a @click="copyToClipboard(generatedUrl)">
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ generatedUrl }}</template>
                     </a>
-                    <button class="copy-icon" aria-label="Copy to clipboard">
-                    <!-- Using Font Awesome copy icon -->
-                    <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
-                </button>
+                    <button class="copy-icon" aria-label="Copy to clipboard" @click="copyToClipboard(generatedUrl)">
+                        <!-- Using Font Awesome copy icon -->
+                        <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
+                    </button>
                 </span>
-                <button @click="copyToClipboard(generatedUrl)">Copy to clipboard</button> <button @click="state='input'">Share another password</button>
-
+                <button @click="copyToClipboard(generatedUrl)">Copy to clipboard</button>
+                <button @click="state='input'">Share another password</button>
             </p>
-            <!-- Display a subtle success message -->
-            <!--p v-if="copySuccess" class="copy-success">Copied to clipboard!</p-->
         </div>
 
         <div v-else-if="state === 'ready'">
@@ -54,7 +51,8 @@
 
         <div v-else-if="state === 'viewed'">
             <p>The password is: <span class="display-password"><strong>{{ decryptedPassword }}</strong></span></p>
-            <button @click="copyToClipboard(decryptedPassword)">Copy to clipboard</button> <button @click="state='input'">Share a new password</button>
+            <button @click="copyToClipboard(decryptedPassword)">Copy to clipboard</button>
+            <button @click="state='input'">Share a new password</button>
         </div>
 
         <div v-else-if="state === 'not-found'">
@@ -67,100 +65,57 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 
+// Reactive variables
 const password = ref('');
 const expiry = ref(10080);
 const generatedUrl = ref('');
 const decryptedPassword = ref('');
 const state = ref('loading');
-const copySuccess = ref(false); // New reactive variable\// Declare the passwordInput ref
+const copySuccess = ref(false);
 const passwordInput = ref(null);
 
 const route = useRoute();
-const router = useRouter();
 
 onMounted(async () => {
-    const { tokenBase64 } = getTokenAndKeyFromFragment();
-    if (tokenBase64) {
-        await checkPasswordExists();
-    } else {
-        state.value = 'input';
-
-        // Focus on the textarea after the DOM updates
-        nextTick(() => {
-            if (passwordInput.value) {
-                passwordInput.value.focus();
-            }
-        });
-    }
+    await initializeState();
 });
 
 watch(
     () => route.fullPath,
     async () => {
-        const { tokenBase64 } = getTokenAndKeyFromFragment();
-        if (tokenBase64) {
-            state.value = 'loading';
-            await checkPasswordExists();
-        } else {
-            state.value = 'input';
-        }
+        await initializeState();
     }
 );
 
 watch(state, (newState) => {
     if (newState === 'input') {
         nextTick(() => {
-            if (passwordInput.value) {
-                passwordInput.value.focus();
-            }
+            passwordInput.value?.focus();
         });
     }
 });
+
+async function initializeState() {
+    const { tokenBase64 } = getTokenAndKeyFromFragment();
+    if (tokenBase64) {
+        state.value = 'loading';
+        await checkPasswordExists();
+    } else {
+        state.value = 'input';
+        nextTick(() => {
+            passwordInput.value?.focus();
+        });
+    }
+}
 
 const submitPassword = async () => {
     try {
         state.value = 'loading';
 
-        // Generate a random encryption key (AES-256-GCM)
-        const key = await crypto.subtle.generateKey(
-            {
-                name: "AES-GCM",
-                length: 256, // 256-bit key for AES-256-GCM
-            },
-            true,
-            ["encrypt", "decrypt"]
-        );
-
-        // Export the key and encode it in URL-safe Base64
-        const exportedKey = await crypto.subtle.exportKey("raw", key);
-        const encryptionKeyBase64 = base64UrlEncode(exportedKey);
-
-        // Encode the password to an ArrayBuffer
-        const enc = new TextEncoder();
-        const passwordBuffer = enc.encode(password.value);
-
-        // Generate a random IV (Initialization Vector)
-        const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 bytes for AES-GCM
-
-        // Encrypt the password
-        const encryptedPasswordBuffer = await crypto.subtle.encrypt(
-            {
-                name: "AES-GCM",
-                iv: iv,
-            },
-            key,
-            passwordBuffer
-        );
-
-        // Convert encrypted password and IV to URL-safe Base64
-        const encryptedPasswordBase64 = base64UrlEncode(encryptedPasswordBuffer);
-        const ivBase64 = base64UrlEncode(iv);
-
-        // Generate a secure token (16 bytes)
-        const tokenBytes = crypto.getRandomValues(new Uint8Array(16));
-        const tokenBase64 = base64UrlEncode(tokenBytes);
+        const { encryptedPasswordBase64, ivBase64, encryptionKeyBase64 } = await encryptPassword(password.value);
+        const tokenBase64 = generateToken();
 
         // Send the encrypted password, IV, and token to the server
         await axios.post('/api/create', {
@@ -180,6 +135,55 @@ const submitPassword = async () => {
         alert('An error occurred while submitting your password. Please try again.');
     }
 };
+
+async function encryptPassword(passwordText) {
+    // Generate a random encryption key (AES-256-GCM)
+    const key = await crypto.subtle.generateKey(
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['encrypt', 'decrypt']
+    );
+
+    // Export the key and encode it in URL-safe Base64
+    const exportedKey = await crypto.subtle.exportKey('raw', key);
+    const encryptionKeyBase64 = base64UrlEncode(exportedKey);
+
+    // Encode the password to an ArrayBuffer
+    const enc = new TextEncoder();
+    const passwordBuffer = enc.encode(passwordText);
+
+    // Generate a random IV (Initialization Vector)
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    // Encrypt the password
+    const encryptedPasswordBuffer = await crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        key,
+        passwordBuffer
+    );
+
+    // Convert encrypted password and IV to URL-safe Base64
+    const encryptedPasswordBase64 = base64UrlEncode(encryptedPasswordBuffer);
+    const ivBase64 = base64UrlEncode(iv);
+
+    return {
+        encryptedPasswordBase64,
+        ivBase64,
+        encryptionKeyBase64,
+    };
+}
+
+function generateToken() {
+    // Generate a secure token (16 bytes)
+    const tokenBytes = crypto.getRandomValues(new Uint8Array(16));
+    return base64UrlEncode(tokenBytes);
+}
 
 const copyToClipboard = async (text) => {
     try {
@@ -213,7 +217,6 @@ const checkPasswordExists = async () => {
 
 function getTokenAndKeyFromFragment() {
     const fragment = window.location.hash.substring(1); // Remove the '#' character
-
     const [tokenBase64, encryptionKeyBase64] = fragment.split('.');
     return { tokenBase64, encryptionKeyBase64 };
 }
@@ -227,7 +230,7 @@ function base64UrlEncode(arrayBuffer) {
 
 function base64UrlDecode(base64UrlString) {
     const base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
-    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
 
 const viewPassword = async () => {
@@ -243,36 +246,11 @@ const viewPassword = async () => {
             const encryptedPasswordBase64 = response.data.encryptedPassword;
             const ivBase64 = response.data.iv;
 
-            // Decode the encryption key from URL-safe Base64
-            const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
-            const key = await crypto.subtle.importKey(
-                "raw",
-                encryptionKeyBytes,
-                {
-                    name: "AES-GCM",
-                    length: 256,
-                },
-                true,
-                ["decrypt"]
+            decryptedPassword.value = await decryptPassword(
+                encryptedPasswordBase64,
+                ivBase64,
+                encryptionKeyBase64
             );
-
-            // Decode encrypted password and IV from URL-safe Base64
-            const encryptedPasswordBuffer = base64UrlDecode(encryptedPasswordBase64);
-            const iv = base64UrlDecode(ivBase64);
-
-            // Decrypt the password
-            const decryptedBuffer = await crypto.subtle.decrypt(
-                {
-                    name: 'AES-GCM',
-                    iv: iv,
-                },
-                key,
-                encryptedPasswordBuffer
-            );
-
-            // Decode the decrypted password
-            const dec = new TextDecoder();
-            decryptedPassword.value = dec.decode(decryptedBuffer);
 
             state.value = 'viewed';
         } catch (error) {
@@ -281,9 +259,42 @@ const viewPassword = async () => {
         }
     }
 };
+
+async function decryptPassword(encryptedPasswordBase64, ivBase64, encryptionKeyBase64) {
+    // Decode the encryption key from URL-safe Base64
+    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
+    const key = await crypto.subtle.importKey(
+        'raw',
+        encryptionKeyBytes,
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['decrypt']
+    );
+
+    // Decode encrypted password and IV from URL-safe Base64
+    const encryptedPasswordBuffer = base64UrlDecode(encryptedPasswordBase64);
+    const iv = base64UrlDecode(ivBase64);
+
+    // Decrypt the password
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        key,
+        encryptedPasswordBuffer
+    );
+
+    // Decode the decrypted password
+    const dec = new TextDecoder();
+    return dec.decode(decryptedBuffer);
+}
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 [v-cloak] {
     display: none;
 }
