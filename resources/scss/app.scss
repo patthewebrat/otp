@@ -1,137 +1,157 @@
-html {
-    body {
+/* Import Font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
 
-        background-color: #181818;
+/* Variables */
+$background-color: #181818;
+$app-background-color: #49346A;
+$primary-color: #fff;
+$secondary-color: #49346A;
+$success-color: green;
+$font-family: 'Montserrat', sans-serif;
+$monospace-font: 'Courier New', monospace;
 
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+/* Global Styles */
+body {
+    background-color: $background-color;
+    color: $primary-color;
+    font-family: $font-family;
+    margin: 0;
+    padding: 0;
 
-        p {
-            margin: 10px 0;
+    p {
+        margin: 10px 0;
+    }
+
+    /* App Container */
+    #app {
+        background-color: $app-background-color;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+
+        /* Header */
+        h1 {
+            font-size: 2em;
+            margin: 20px 0;
         }
 
-        #app {
-            background-color: #49346A;
+        /* Logo */
+        .logo {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+
+        /* Textarea */
+        textarea {
             width: 100%;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 500px;
+            height: 150px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 1.2em;
+            font-family: $monospace-font;
+        }
 
-            color: white;
-            font-family: 'Montserrat', sans-serif;
-            box-sizing: border-box;
+        /* Input Fields */
+        input {
+            margin-left: 10px;
+            width: 50px;
+        }
 
-            .logo {
-                width: 200px;
-                margin-bottom: 20px;
-            }
+        select {
+            padding: 5px;
+        }
 
-            h1 {
-                font-size: 2em;
-                margin: 20px 0;
-            }
+        /* Buttons */
+        button {
+            margin-top: 20px;
+            margin-right: 10px;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: $secondary-color;
+            background-color: $primary-color;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
 
-            textarea {
-                width: 100%;
-                max-width: 500px;
-                height: 150px;
-                margin-bottom: 20px;
-                font-size: 1.2em;
-                padding: 10px;
-                font-family: "Courier New";
-            }
-
-            input {
-                margin-left: 10px;
-                width: 50px;
-            }
-
-            select {
-                padding: 5px;
-            }
-
-            button {
-                margin-top: 20px;
-                padding: 10px 20px;
-                cursor: pointer;
-                background-color: #fff;
-                color: #49346A;
-                border: none;
-                font-size: 1em;
-            }
-
-            button:hover {
+            &:hover {
                 background-color: #ddd;
             }
-
-            .display-password {
-                display: block;
-                font-size: 2em;
-            }
-
-            .generated-url {
-
-                cursor: pointer;
-
-                .password-link {
-                    background-color: #fff;
-                    display: block;
-                    color: #333;
-                    padding: 20px 20px;
-                    margin: 20px 0;
-                    font-family: "Courier New";
-                    max-width: 1080px;
-                    white-space: nowrap;
-                    position: relative;
-
-                    button {
-                        margin: 0 0 0 10px;
-                        position: absolute;
-                        right: 0px;
-                        top: 10px;
-                        background-color: #fff;
-                    }
-
-                }
-            }
-
-
-
-            .copy-icon {
-                background: none;
-                border: none;
-                cursor: pointer;
-                margin-left: 8px;
-                font-size: 1.2em;
-                color: #49346A;
-
-                &:focus {
-                    outline: none;
-                }
-
-                i {
-                    transition: color 0.3s;
-                }
-
-                i.fa-check {
-                    color: green;
-                }
-            }
-
-            .copy-success {
-                color: green;
-                margin-top: 8px;
-            }
-
         }
 
-        footer {
-            padding: 40px;
-            color: #fff;
-            font-size: 14px;
+        /* Generated URL */
+        .generated-url {
+            cursor: pointer;
+        }
 
-            a {
-                color: #fff;
+        /* Copy Icon */
+        .copy-icon {
+            background: $primary-color;
+            color: $secondary-color;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            position: absolute;
+            top: 8px;
+            right: 0px;
+            margin: 0;
+
+            &:focus {
+                outline: none;
+            }
+
+            i {
+                transition: color 0.3s;
+
+                &.fa-check {
+                    color: $success-color;
+                }
+            }
+
+            &:hover {
+                background-color: inherit;
             }
         }
 
+        /* Copy Success Message */
+        .copy-success {
+            color: $success-color;
+            margin-top: 8px;
+        }
+
+        /* Password Link & Display */
+        .password-link,
+        .view-password,
+        .display-password {
+            display: block;
+        }
+
+        .view-password {
+            cursor: pointer;
+        }
+
+        /* Data Format */
+        .data-format {
+            background-color: $primary-color;
+            color: #333;
+            font-family: $monospace-font;
+            padding: 20px 80px 20px 20px;
+            margin: 20px 0;
+            max-width: 1080px;
+            white-space: nowrap;
+            position: relative;
+        }
+    }
+
+    /* Footer */
+    footer {
+        padding: 40px;
+        color: $primary-color;
+        font-size: 14px;
+
+        a {
+            color: $primary-color;
+        }
     }
 }

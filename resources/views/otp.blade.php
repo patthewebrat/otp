@@ -16,7 +16,7 @@
     <a href="https://indulge.digital" target="_new">
         <img src="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
     </a>
-    <p><strong>How it works:</strong> The app uses client-side encryption to securely generate and share one-time passwords that self-destruct after use.</p>
+    <p><strong>How it works:</strong> This app uses AES-GCM-256 based client-side encryption to securely generate and share one-time passwords that self-destruct after use. Neither the unencrypted password or the encryption key are ever sent to our servers. The encrypted password is the only piece of information stored on our servers.</p>
     <p><strong>Disclaimer:</strong> While we strive to ensure security, we do not guarantee that passwords cannot be intercepted or misused. Use at your own risk.</p>
 
 </footer>

@@ -26,11 +26,11 @@
             <button @click="submitPassword">Submit</button>
         </div>
 
-        <div v-else-if="state === 'generated'" class="generated-url">
+        <div v-else-if="state === 'generated'" class="generated-url" @click="copyToClipboard(generatedUrl)">
             <p>
-                Your one-time password link is displayed below. Click the link to save it to your clipboard:
-                <span class="password-link">
-                    <a @click="copyToClipboard(generatedUrl)">
+                Your one-time password link is displayed below. Click the link to save it to your clipboard:<b/>
+                <span class="password-link data-format">
+                    <a>
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ generatedUrl }}</template>
                     </a>
@@ -40,7 +40,7 @@
                     </button>
                 </span>
                 <button @click="copyToClipboard(generatedUrl)">Copy to clipboard</button>
-                <button @click="state='input'">Share another password</button>
+                <button @click="reset">Share another password</button>
             </p>
         </div>
 
@@ -50,14 +50,25 @@
         </div>
 
         <div v-else-if="state === 'viewed'">
-            <p>The password is: <span class="display-password"><strong>{{ decryptedPassword }}</strong></span></p>
+            <p>The password is below. Click to copy to your clipboard:<br/>
+                <span class="view-password data-format"  @click="copyToClipboard(generatedUrl)">
+                    <a class="display-password">
+                        <template v-if="copySuccess">Copied to clipboard</template>
+                        <template v-else>{{ decryptedPassword }}</template>
+                    </a>
+                    <button class="copy-icon" aria-label="Copy to clipboard" @click="copyToClipboard(decryptedPassword)">
+                        <!-- Using Font Awesome copy icon -->
+                        <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
+                    </button>
+                </span>
+            </p>
             <button @click="copyToClipboard(decryptedPassword)">Copy to clipboard</button>
-            <button @click="state='input'">Share a new password</button>
+            <button @click="reset">Share a new password</button>
         </div>
 
         <div v-else-if="state === 'not-found'">
             <p>Sorry, this password does not exist. It has either expired or never existed in the first place.</p>
-            <button @click="state='input'">Share a new password</button>
+            <button @click="reset">Share a new password</button>
         </div>
     </div>
 </template>
@@ -214,6 +225,11 @@ const checkPasswordExists = async () => {
         state.value = 'not-found';
     }
 };
+
+function reset() {
+    password.value = '';
+    state.value = 'input';
+}
 
 function getTokenAndKeyFromFragment() {
     const fragment = window.location.hash.substring(1); // Remove the '#' character
