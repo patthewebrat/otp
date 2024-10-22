@@ -60,7 +60,24 @@ body {
         }
 
         select {
-            padding: 5px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
+
+            option {
+                background-color: black; /* Fallback if transparency not supported in option background */
+                color: white;
+            }
+
+            &:focus {
+                border-color: white;
+                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            }
+
         }
 
         /* Buttons */

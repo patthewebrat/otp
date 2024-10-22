@@ -1,16 +1,16 @@
 <template>
     <div id="app" v-cloak>
-        <h1>Securely share a password</h1>
+        <h1>Share a Password Securely</h1>
 
         <div v-if="state === 'loading'">
-            <!-- Loading state -->
+            <!-- Loading... -->
         </div>
 
         <div v-else-if="state === 'input'">
-            <textarea v-model="password" ref="passwordInput" placeholder="Enter the password"></textarea>
+            <textarea v-model="password" ref="passwordInput" placeholder="Enter password" aria-label="Password input"></textarea>
             <div>
-                <label for="expiry">Set Expiry Time (in minutes): </label>
-                <select v-model.number="expiry">
+                <label for="expiry">Expiry Time: </label>
+                <select v-model.number="expiry" id="expiry" aria-label="Expiry time selection">
                     <option value="5">5 minutes</option>
                     <option value="15">15 minutes</option>
                     <option value="30">30 minutes</option>
@@ -23,51 +23,49 @@
                     <option value="43200">30 days</option>
                 </select>
             </div>
-            <button @click="submitPassword">Submit</button>
+            <button @click="submitPassword" aria-label="Submit password">Submit</button>
         </div>
 
         <div v-else-if="state === 'generated'" class="generated-url" @click="copyToClipboard(generatedUrl)">
             <p>
-                Your one-time password link is displayed below. Click the link to save it to your clipboard:<b/>
+                Your one-time password link:<br />
                 <span class="password-link data-format">
-                    <a>
+                    <a href="#" aria-label="Password link">
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ generatedUrl }}</template>
                     </a>
-                    <button class="copy-icon" aria-label="Copy to clipboard" @click="copyToClipboard(generatedUrl)">
-                        <!-- Using Font Awesome copy icon -->
+                    <button class="copy-icon" aria-label="Copy link" @click="copyToClipboard(generatedUrl)">
                         <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
                     </button>
                 </span>
-                <button @click="copyToClipboard(generatedUrl)">Copy to clipboard</button>
-                <button @click="reset">Share another password</button>
             </p>
+            <button @click="copyToClipboard(generatedUrl)">Copy link</button>
+            <button @click="reset">Share another password</button>
         </div>
 
         <div v-else-if="state === 'ready'">
-            <p>This password will self-destruct after you have viewed it.</p>
-            <button @click="viewPassword">Click to view</button>
+            <p>This password will be deleted after it’s viewed.</p>
+            <button @click="viewPassword">View password</button>
         </div>
 
         <div v-else-if="state === 'viewed'">
-            <p>The password is below. Click to copy to your clipboard:<br/>
-                <span class="view-password data-format"  @click="copyToClipboard(generatedUrl)">
-                    <a class="display-password">
+            <p>The password is:<br />
+                <span class="view-password data-format" @click="copyToClipboard(decryptedPassword)">
+                    <a href="#" aria-label="Password">
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ decryptedPassword }}</template>
                     </a>
-                    <button class="copy-icon" aria-label="Copy to clipboard" @click="copyToClipboard(decryptedPassword)">
-                        <!-- Using Font Awesome copy icon -->
+                    <button class="copy-icon" aria-label="Copy password" @click="copyToClipboard(decryptedPassword)">
                         <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
                     </button>
                 </span>
             </p>
-            <button @click="copyToClipboard(decryptedPassword)">Copy to clipboard</button>
+            <button @click="copyToClipboard(decryptedPassword)">Copy password</button>
             <button @click="reset">Share a new password</button>
         </div>
 
         <div v-else-if="state === 'not-found'">
-            <p>Sorry, this password does not exist. It has either expired or never existed in the first place.</p>
+            <p>Sorry, this password is unavailable or has expired.</p>
             <button @click="reset">Share a new password</button>
         </div>
     </div>
