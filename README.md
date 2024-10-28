@@ -34,7 +34,7 @@ A secure, self-destructing password sharing application built with Vue.js and La
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/secure-password-share.git
+git clone https://github.com/patthewebrat/otp.git
 cd secure-password-share
 ```
 
