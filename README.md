@@ -1,4 +1,4 @@
-# Secure Password Share
+# One Time Password Sharing App
 
 A secure, self-destructing password sharing application built with Vue.js and Laravel. Share passwords securely with end-to-end encryption - passwords are encrypted in the browser before being sent to the server and can only be viewed once before being permanently deleted.
 
