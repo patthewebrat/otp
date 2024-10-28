@@ -68,24 +68,6 @@ php artisan migrate
 npm run build
 ```
 
-## Database Schema
-
-The application requires a single table for storing one-time passwords:
-
-```sql
-CREATE TABLE otps (
-    id bigint unsigned NOT NULL AUTO_INCREMENT,
-    token varchar(255) NOT NULL,
-    password text NOT NULL,
-    iv varchar(255) NOT NULL,
-    expires_at timestamp NOT NULL,
-    created_at timestamp NULL DEFAULT NULL,
-    updated_at timestamp NULL DEFAULT NULL,
-    PRIMARY KEY (id),
-    UNIQUE KEY otps_token_unique (token)
-);
-```
-
 ## Development
 
 For local development:
