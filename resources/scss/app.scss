@@ -159,6 +159,10 @@ body {
             max-width: 1080px;
             white-space: nowrap;
             position: relative;
+
+            &.view-password {
+                white-space: pre-wrap;
+            }
         }
     }
 
@@ -170,6 +174,7 @@ body {
 
         a {
             color: $primary-color;
+            text-decoration: underline;
         }
     }
 }

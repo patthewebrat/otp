@@ -28,7 +28,7 @@
 
         <div v-else-if="state === 'generated'" class="generated-url" @click="copyToClipboard(generatedUrl)">
             <p>
-                Your one-time password link:<br />
+                Here is your one-time password link. Copy this and share it with whoever needs it:<br />
                 <span class="password-link data-format">
                     <a href="#" aria-label="Password link">
                         <template v-if="copySuccess">Copied to clipboard</template>
