@@ -30,10 +30,10 @@
             <p>
                 Here is your one-time password link. Copy this and share it with whoever needs it:<br />
                 <span class="password-link data-format">
-                    <a href="#" aria-label="Password link">
+                    <span aria-label="Password link">
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ generatedUrl }}</template>
-                    </a>
+                    </span>
                     <button class="copy-icon" aria-label="Copy link" @click="copyToClipboard(generatedUrl)">
                         <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
                     </button>
@@ -51,10 +51,10 @@
         <div v-else-if="state === 'viewed'">
             <p>The password is:<br />
                 <span class="view-password data-format" @click="copyToClipboard(decryptedPassword)">
-                    <a href="#" aria-label="Password">
+                    <span aria-label="Password">
                         <template v-if="copySuccess">Copied to clipboard</template>
                         <template v-else>{{ decryptedPassword }}</template>
-                    </a>
+                    </span>
                     <button class="copy-icon" aria-label="Copy password" @click="copyToClipboard(decryptedPassword)">
                         <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
                     </button>
