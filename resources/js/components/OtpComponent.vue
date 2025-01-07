@@ -110,6 +110,8 @@ watch(state, (newState) => {
             });
             break;
         case 'generated':
+            document.title = 'Share a Password Securely';
+            break;
         case 'ready':
             document.title = 'View password';
             break;
