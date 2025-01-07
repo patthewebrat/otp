@@ -99,10 +99,28 @@ watch(
 );
 
 watch(state, (newState) => {
-    if (newState === 'input') {
-        nextTick(() => {
-            passwordInput.value?.focus();
-        });
+    switch (newState) {
+        case 'viewed':
+            document.title = 'View password';
+            break;
+        case 'input':
+            document.title = 'Share a Password Securely';
+            nextTick(() => {
+                passwordInput.value?.focus();
+            });
+            break;
+        case 'generated':
+        case 'ready':
+            document.title = 'View password';
+            break;
+        case 'loading':
+            document.title = 'Loading...';
+            break;
+        case 'not-found':
+            document.title = 'Password Unavailable';
+            break;
+        default:
+            document.title = 'Share a Password Securely';
     }
 });
 
