@@ -1,6 +1,6 @@
 <template>
     <div id="app" v-cloak>
-        <h1>Share a Password Securely</h1>
+        <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
             <!-- Loading... -->
@@ -84,6 +84,8 @@ const decryptedPassword = ref('');
 const state = ref('loading');
 const copySuccess = ref(false);
 const passwordInput = ref(null);
+const pageTitle = ref('Securely Share a Password');
+
 
 const route = useRoute();
 
@@ -101,30 +103,34 @@ watch(
 watch(state, (newState) => {
     switch (newState) {
         case 'viewed':
-            document.title = 'View password';
+            pageTitle.value = 'View password';
             break;
         case 'input':
-            document.title = 'Share a Password Securely';
+            pageTitle.value = 'Share a Password Securely';
             nextTick(() => {
                 passwordInput.value?.focus();
             });
             break;
         case 'generated':
-            document.title = 'Share a Password Securely';
+            pageTitle.value = 'Share a Password Securely';
             break;
         case 'ready':
-            document.title = 'View password';
+            pageTitle.value = 'View Password';
             break;
         case 'loading':
-            document.title = 'Loading...';
+            pageTitle.value = 'Share a Password Securely';
             break;
         case 'not-found':
-            document.title = 'Password Unavailable';
+            pageTitle.value = 'Password Unavailable';
             break;
         default:
-            document.title = 'Share a Password Securely';
+            pageTitle.value = 'Share a Password Securely';
     }
 });
+
+watch(pageTitle, (newTitle) => {
+    document.title = newTitle;
+})
 
 async function initializeState() {
     const { tokenBase64 } = getTokenAndKeyFromFragment();
@@ -146,6 +152,8 @@ const submitPassword = async () => {
         const { encryptedPasswordBase64, ivBase64, encryptionKeyBase64 } = await encryptPassword(password.value);
         const tokenBase64 = generateToken();
 
+        console.log(tokenBase64);
+
         // Send the encrypted password, IV, and token to the server
         await axios.post('/api/create', {
             token: tokenBase64,
@@ -155,7 +163,7 @@ const submitPassword = async () => {
         });
 
         // Construct the URL with the token and key in the fragment
-        generatedUrl.value = `${window.location.origin}/#${tokenBase64}.${encryptionKeyBase64}`;
+        generatedUrl.value = `${window.location.origin}/v#${tokenBase64}.${encryptionKeyBase64}`;
 
         state.value = 'generated';
     } catch (error) {

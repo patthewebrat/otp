@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Securely Share a Password | Indulge</title>
+    <title>
+        {{ request()->is('v') ? 'View Password' : 'Securely Share a Password | Indulge' }}
+    </title>
     @vite(['resources/css/reset.css', 'resources/scss/app.scss', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
