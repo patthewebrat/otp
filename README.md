@@ -30,7 +30,7 @@ A secure, self-destructing password sharing application built with Vue.js and La
 - **HTTP Client**: Axios
 - **Routing**: Vue Router
 
-## Installation
+## Installation and configuration
 
 1. Clone the repository:
 ```bash
@@ -58,26 +58,46 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-6. Run database migrations:
-```bash
-php artisan migrate
-```
-
-7. Build frontend assets:
-```bash
-npm run build
-```
+Note - WebCrypto will not function without HTTPS, as such you will require HTTPS in all environments.
 
 ## Development
 
-For local development:
+The project is set up to use ddev, or you can use the built-in Laravel server.
 
-1. Start the Laravel development server:
+### ddev
+
+With ddev you shouldn't have to edit .env.
+
+1. Start ddev
+```
+ddev start
+```
+
+2. Run database migrations:
+```bash
+ddev exec php artisan migrate
+```
+
+3. Start the Vite development server:
+```bash
+npm run dev
+```
+
+### Laravel server
+
+1. Spin up your database and enter the details into `.env`.
+
+2. Start the Laravel development server:
 ```bash
 php artisan serve
 ```
 
-2. Start the Vite development server:
+2. Run database migrations:
+```bash
+php artisan migrate
+```
+
+3. Start the Vite development server:
 ```bash
 npm run dev
 ```
@@ -85,27 +105,29 @@ npm run dev
 ## Production Deployment
 
 1. Set your production environment variables in `.env`
-2. Optimize Laravel:
+
+2. Optimise Laravel:
 ```bash
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 ```
 
-3. Build frontend assets:
+3. Build your frontend assets:
 ```bash
 npm run build
 ```
 
-## Security Considerations
+4. Configure cron to run this command every minute (or at least every 5 minute), which will clear out expired passwords:
+```
+php artisan schedule:run
+```
 
-- Always use HTTPS in production
-- Regularly update dependencies
-- Configure appropriate session timeouts
-- Set up proper rate limiting
-- Monitor server logs for suspicious activity
-- Ensure proper server hardening
-- Implement CSP headers
+## Customisation for Your Project
+
+If you wish to customise this application for your own use, we recommend creating a fork of this repository. Forking allows you to:
+- Maintain your own changes without affecting the original repository.
+- Easily merge updates from the core repository into your custom version.
 
 ## Contributing
 
