@@ -7,6 +7,15 @@
     <title>
         {{ request()->is('v') ? 'View Password' : 'Securely Share a Password | OTP Tool' }}
     </title>
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="{{ request()->is('v') ? 'View Password' : 'Securely Share a Password | OTP Tool' }}">
+    <meta property="og:description" content="{{ request()->is('v') ? 'A password has been securely shared with you. View it now before it self-destructs. Your data is protected with AES-GCM-256 encryption.' : 'Securely generate and share one-time passwords that self-destruct after use. Your data stays private with AES-GCM-256 encryption.' }}">
+    <meta property="og:image" content="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="OTP Tool">
+
     @vite(['resources/css/reset.css', 'resources/scss/app.scss', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
