@@ -152,8 +152,6 @@ const submitPassword = async () => {
         const { encryptedPasswordBase64, ivBase64, encryptionKeyBase64 } = await encryptPassword(password.value);
         const tokenBase64 = generateToken();
 
-        console.log(tokenBase64);
-
         // Send the encrypted password, IV, and token to the server
         await axios.post('/api/create', {
             token: tokenBase64,
