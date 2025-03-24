@@ -1,241 +1,113 @@
 /* Import Font */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
 
-/* Variables */
-$background-color: #181818;
-$app-background-color: #49346A;
-$primary-color: #fff;
-$secondary-color: #49346A;
-$success-color: green;
-$font-family: 'Montserrat', sans-serif;
-$monospace-font: 'Courier New', monospace;
+/* Import variables and common styles */
+@import 'variables';
+@import 'common';
 
-/* Global Styles */
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Global Layout */
 body {
     background-color: $background-color;
     color: $primary-color;
     font-family: $font-family;
-    margin: 0;
-    padding: 0;
+    line-height: 1.5;
+}
 
-    p {
-        margin: 10px 0;
+/* Typography */
+h1, h2, h3, p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: $primary-color;
+    text-decoration: none;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/* Main Navigation */
+.main-nav {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    
+    .nav-container {
+        max-width: $content-max-width;
+        margin: 0 auto;
+        display: flex;
+        gap: 1rem;
     }
     
-    /* Main Navigation */
-    .main-nav {
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 15px 0;
-        
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: flex-start;
-            padding: 0;
-        }
-        
-        .nav-item {
-            color: white;
-            text-decoration: none;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-            margin: 0 20px 0 0;
-            font-size: 1em;
-            
-            &:hover {
-                opacity: 1;
-            }
-        }
-        
-        .router-link-active {
-            opacity: 1;
-            font-weight: 600;
-        }
-    }
-
-    /* App Container */
-    #app {
-        background-color: $app-background-color;
-        width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-        box-sizing: border-box;
-        
-        /* Feature Navigation */
-        .feature-nav {
-            display: flex;
-            justify-content: flex-start;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            
-            a, span {
-                padding: 10px 20px;
-                margin-right: 10px;
-                color: white;
-                text-decoration: none;
-                opacity: 0.7;
-                transition: opacity 0.3s;
-            }
-            
-            a:hover {
-                opacity: 1;
-            }
-            
-            .active-feature {
-                opacity: 1;
-                border-bottom: 2px solid white;
-                font-weight: 600;
-            }
-        }
-
-        /* Header */
-        h1 {
-            font-size: 2em;
-            margin: 20px 0;
-        }
-
-        /* Logo */
-        .logo {
-            width: 200px;
-            margin-bottom: 20px;
-        }
-
-        /* Textarea */
-        textarea {
-            width: 100%;
-            max-width: 500px;
-            height: 150px;
-            margin-bottom: 20px;
-            padding: 10px;
-            font-size: 1.2em;
-            font-family: $monospace-font;
-        }
-
-        /* Input Fields */
-        input {
-            margin-left: 10px;
-            width: 50px;
-        }
-
-        select {
-            background-color: transparent;
-            color: white;
-            border: 1px solid white;
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            outline: none;
-            margin-left: 10px;
-
-            option {
-                background-color: black; /* Fallback if transparency not supported in option background */
-                color: white;
-            }
-
-            &:focus {
-                border-color: white;
-                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-            }
-
-        }
-
-        /* Buttons */
-        button, .file-label {
-            margin-top: 20px;
-            margin-right: 10px;
-            padding: 10px 20px;
-            font-size: 1em;
-            color: $secondary-color;
-            background-color: $primary-color;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: inline-block;
-
-            &:hover {
-                background-color: #ddd;
-            }
-        }
-
-        /* Generated URL */
-        .generated-url {
-            cursor: pointer;
-        }
-
-        /* Copy Icon */
-        .copy-icon {
-            background: $primary-color;
-            color: $secondary-color;
-            border: none;
-            font-size: 1.2em;
-            cursor: pointer;
-            position: absolute;
-            top: 8px;
-            right: 0px;
-            margin: 0;
-
-            &:focus {
-                outline: none;
-            }
-
-            i {
-                transition: color 0.3s;
-
-                &.fa-check {
-                    color: $success-color;
-                }
-            }
-
-            &:hover {
-                background-color: inherit;
-            }
-        }
-
-        /* Copy Success Message */
-        .copy-success {
-            color: $success-color;
-            margin-top: 8px;
-        }
-
-        /* Password Link & Display */
-        .password-link,
-        .view-password,
-        .display-password {
-            display: block;
-        }
-
-        .view-password {
-            cursor: pointer;
-        }
-
-        /* Data Format */
-        .data-format {
-            background-color: $primary-color;
-            color: #333;
-            font-family: $monospace-font;
-            padding: 20px 80px 20px 20px;
-            margin: 20px 0;
-            max-width: 1080px;
-            white-space: nowrap;
-            position: relative;
-            display: inline-block;
-
-            &.view-password {
-                white-space: pre-wrap;
-            }
-        }
-    }
-
-    /* Footer */
-    footer {
-        padding: 40px;
+    .nav-item {
         color: $primary-color;
-        font-size: 14px;
-
-        a {
-            color: $primary-color;
-            text-decoration: underline;
+        text-decoration: none;
+        opacity: $opacity-inactive;
+        transition: opacity $transition-speed;
+        font-size: $font-size-base;
+        
+        &:hover {
+            opacity: $opacity-active;
         }
+    }
+    
+    .router-link-active {
+        opacity: $opacity-active;
+        font-weight: 600;
+    }
+}
+
+/* App Container */
+#app {
+    background-color: $app-background-color;
+    width: 100%;
+    padding: 3rem 1rem;
+}
+
+.app-container {
+    max-width: $content-max-width;
+    margin: 0 auto;
+}
+
+/* Footer */
+footer {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    color: $primary-color;
+    font-size: $font-size-small;
+    margin-top: 1rem;
+
+    a {
+        color: $primary-color;
+        text-decoration: underline;
+        
+        &:hover {
+            opacity: $opacity-active;
+        }
+    }
+    
+    p {
+        max-width: $content-max-width;
+        margin: 0 auto 1rem;
+    }
+    
+    img {
+        max-width: 150px;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .data-format {
+        max-width: 100%;
+        overflow-x: auto;
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <div id="app" v-cloak>
+    <div v-cloak>
         <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
@@ -342,7 +342,21 @@ async function decryptPassword(encryptedPasswordBase64, ivBase64, encryptionKeyB
 </script>
 
 <style scoped>
-[v-cloak] {
-    display: none;
+/* OTP Component specific styles */
+.password-container {
+    margin: 20px 0;
+}
+
+.password-display {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.expiry-selection {
+    margin: 15px 0;
+}
+
+.view-password {
+    cursor: pointer;
 }
 </style>

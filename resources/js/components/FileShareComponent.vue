@@ -1,5 +1,5 @@
 <template>
-    <div id="app" v-cloak>
+    <div v-cloak>
         <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
@@ -458,16 +458,9 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
 </script>
 
 <style scoped>
-[v-cloak] {
-    display: none;
-}
-
+/* Component-specific styles only */
 .file-upload {
     margin-bottom: 1rem;
-}
-
-.file-label {
-    margin-top: 0;
 }
 
 .file-input {
@@ -476,56 +469,16 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
     pointer-events: none;
 }
 
-.progress-bar {
-    width: 100%;
-    max-width: 500px;
-    height: 24px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    margin: 20px 0;
-    position: relative;
-    overflow: hidden;
+.file-link {
+    font-weight: 500;
 }
 
-.progress {
-    height: 100%;
-    background-color: #7e57c2;
-    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
-    background-size: 1rem 1rem;
-    transition: width 0.3s ease;
-}
-
-.progress-bar span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 14px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+/* Override common styles as needed */
+.file-label {
+    margin-top: 0;
 }
 
 .file-size-info {
-    font-size: 0.85em;
-    opacity: 0.7;
-    margin: 5px 0 10px 0;
-    font-style: italic;
-}
-
-.error-message {
-    background-color: rgba(255, 0, 0, 0.1);
-    border-left: 3px solid #ff5252;
-    color: #ff5252;
-    padding: 10px 15px;
-    margin: 10px 0;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.9em;
-    max-width: 500px;
-}
-
-.error-message i {
-    margin-right: 6px;
+    margin-top: 5px;
 }
 </style>

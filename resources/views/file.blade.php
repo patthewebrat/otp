@@ -23,9 +23,9 @@
 <div id="app"></div>
 
 <footer>
-    <a href="https://indulge.digital" target="_new">
+    <p><a href="https://indulge.digital" target="_new">
         <img src="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
-    </a>
+    </a></p>
     <p><strong>How it works:</strong> This app uses AES-GCM-256 based client-side encryption to securely share files that self-destruct after download. Neither the unencrypted file or the encryption key are ever sent to our servers. Only the encrypted file is stored on our secure servers.</p>
     <p><strong>About:</strong> <a href="https://indulge.digital/blog/i-built-password-sharing-tool-ai-and-here%E2%80%99s-what-i-learnt" target="_blank">Learn about why this tool exists</a>.</p>
     <p><strong>Disclaimer:</strong> While we strive to ensure security, we do not guarantee that files cannot be intercepted or misused. Use at your own risk.</p>
