@@ -3,7 +3,10 @@
         <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
-            <!-- Loading... -->
+            <div v-if="uploadProgress > 0" class="progress-bar">
+                <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
+                <span>{{ uploadProgress }}%</span>
+            </div>
         </div>
 
         <div v-else-if="state === 'input'">
@@ -19,6 +22,11 @@
                     aria-label="File input"
                     class="file-input"
                 />
+                <p class="file-size-info">Maximum file size: {{ formatFileSize(maxFileSize) }}</p>
+                <div v-if="fileTooLarge" class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    This file is too large. Please select a file smaller than {{ formatFileSize(maxFileSize) }}.
+                </div>
             </div>
             <div v-if="selectedFile">
                 <label for="expiry">Expiry Time: </label>
@@ -36,7 +44,7 @@
                 </select>
                 <button 
                     @click="submitFile" 
-                    :disabled="isUploading" 
+                    :disabled="isUploading || fileTooLarge" 
                     aria-label="Upload file"
                 >
                     {{ isUploading ? 'Encrypting & Uploading...' : 'Upload File' }}
@@ -101,6 +109,9 @@ const isUploading = ref(false);
 const uploadProgress = ref(0);
 const pageTitle = ref('Securely Share a File');
 const fileInfo = ref(null);
+// 10MB size limit - adjust as needed for your application
+const maxFileSize = ref(10 * 1024 * 1024); 
+const fileTooLarge = ref(false);
 
 const route = useRoute();
 
@@ -162,7 +173,20 @@ async function initializeState() {
 }
 
 function handleFileSelection(event) {
-    selectedFile.value = event.target.files[0];
+    const file = event.target.files[0];
+    if (file) {
+        // Check if file is too large
+        if (file.size > maxFileSize.value) {
+            fileTooLarge.value = true;
+            selectedFile.value = file; // Still show the file info
+        } else {
+            fileTooLarge.value = false;
+            selectedFile.value = file;
+        }
+    } else {
+        selectedFile.value = null;
+        fileTooLarge.value = false;
+    }
 }
 
 function formatFileSize(bytes) {
@@ -177,6 +201,10 @@ function formatFileSize(bytes) {
 
 const submitFile = async () => {
     if (!selectedFile.value) return;
+    if (selectedFile.value.size > maxFileSize.value) {
+        fileTooLarge.value = true;
+        return;
+    }
     
     try {
         isUploading.value = true;
@@ -207,8 +235,10 @@ const submitFile = async () => {
                 'Content-Type': 'multipart/form-data'
             },
             onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                uploadProgress.value = percentCompleted;
+                if (progressEvent.total) {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    uploadProgress.value = percentCompleted;
+                }
             }
         });
 
@@ -319,6 +349,7 @@ function reset() {
     selectedFile.value = null;
     state.value = 'input';
     uploadProgress.value = 0;
+    fileTooLarge.value = false;
 }
 
 function getTokenAndKeyFromFragment() {
@@ -345,7 +376,8 @@ const downloadFile = async () => {
     if (tokenBase64 && encryptionKeyBase64 && state.value === 'ready') {
         try {
             state.value = 'loading';
-
+            uploadProgress.value = 0; // Reset progress
+            
             // Fetch the file details from the server
             const response = await axios.get(`/api/file/${tokenBase64}`);
             
@@ -353,8 +385,10 @@ const downloadFile = async () => {
             const fileResponse = await axios.get(response.data.fileUrl, {
                 responseType: 'arraybuffer',
                 onDownloadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    uploadProgress.value = percentCompleted;
+                    if (progressEvent.total) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        uploadProgress.value = percentCompleted;
+                    }
                 }
             });
             
@@ -444,17 +478,21 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
 
 .progress-bar {
     width: 100%;
-    height: 20px;
-    background-color: #f3f3f3;
+    max-width: 500px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
-    margin: 10px 0;
+    margin: 20px 0;
     position: relative;
     overflow: hidden;
 }
 
 .progress {
     height: 100%;
-    background-color: #4caf50;
+    background-color: #7e57c2;
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
     transition: width 0.3s ease;
 }
 
@@ -463,6 +501,31 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.file-size-info {
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin: 5px 0 10px 0;
+    font-style: italic;
+}
+
+.error-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid #ff5252;
+    color: #ff5252;
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+    max-width: 500px;
+}
+
+.error-message i {
+    margin-right: 6px;
 }
 </style>
