@@ -100,6 +100,13 @@ watch(
     }
 );
 
+watch(
+    () => window.location.hash,
+    async () => {
+        await initializeState();
+    }
+);
+
 watch(state, (newState) => {
     switch (newState) {
         case 'viewed':

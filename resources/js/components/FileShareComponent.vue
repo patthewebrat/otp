@@ -1,0 +1,468 @@
+<template>
+    <div id="app" v-cloak>
+        <h1>{{ pageTitle }}</h1>
+
+        <div v-if="state === 'loading'">
+            <!-- Loading... -->
+        </div>
+
+        <div v-else-if="state === 'input'">
+            <div class="file-upload">
+                <label for="file-input" class="file-label">
+                    <span v-if="!selectedFile">Choose file to share</span>
+                    <span v-else>{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
+                </label>
+                <input 
+                    type="file" 
+                    id="file-input" 
+                    @change="handleFileSelection" 
+                    aria-label="File input"
+                    class="file-input"
+                />
+            </div>
+            <div v-if="selectedFile">
+                <label for="expiry">Expiry Time: </label>
+                <select v-model.number="expiry" id="expiry" aria-label="Expiry time selection">
+                    <option value="5">5 minutes</option>
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="120">2 hours</option>
+                    <option value="300">5 hours</option>
+                    <option value="600">10 hours</option>
+                    <option value="1440">24 hours</option>
+                    <option value="2880">2 days</option>
+                    <option value="10080">7 days</option>
+                    <option value="43200">30 days</option>
+                </select>
+                <button 
+                    @click="submitFile" 
+                    :disabled="isUploading" 
+                    aria-label="Upload file"
+                >
+                    {{ isUploading ? 'Encrypting & Uploading...' : 'Upload File' }}
+                </button>
+                <div v-if="uploadProgress > 0 && uploadProgress < 100" class="progress-bar">
+                    <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
+                    <span>{{ uploadProgress }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <div v-else-if="state === 'generated'" class="generated-url" @click="copyToClipboard(generatedUrl)">
+            <p>
+                Here is your one-time file sharing link. Copy this and share it with whoever needs it:<br />
+                <span class="file-link data-format">
+                    <span aria-label="File sharing link">
+                        <template v-if="copySuccess">Copied to clipboard</template>
+                        <template v-else>{{ generatedUrl }}</template>
+                    </span>
+                    <button class="copy-icon" aria-label="Copy link" @click="copyToClipboard(generatedUrl)">
+                        <i :class="copySuccess ? 'fas fa-check' : 'fas fa-copy'"></i>
+                    </button>
+                </span>
+            </p>
+            <p>
+                Sharing: {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+            </p>
+            <button @click="copyToClipboard(generatedUrl)">Copy link</button>
+            <button @click="reset">Share another file</button>
+        </div>
+
+        <div v-else-if="state === 'ready'">
+            <p>This file will be deleted after it's downloaded.</p>
+            <p v-if="fileInfo">File: {{ fileInfo.fileName }} ({{ fileInfo.fileSize }})</p>
+            <button @click="downloadFile">Download file</button>
+        </div>
+
+        <div v-else-if="state === 'downloaded'">
+            <p>File downloaded successfully.</p>
+            <button @click="reset">Share a new file</button>
+        </div>
+
+        <div v-else-if="state === 'not-found'">
+            <p>Sorry, this file is unavailable or has expired.</p>
+            <button @click="reset">Share a new file</button>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, watch, onMounted, nextTick } from 'vue';
+import axios from 'axios';
+import { useRoute } from 'vue-router';
+
+// Reactive variables
+const selectedFile = ref(null);
+const expiry = ref(10080);
+const generatedUrl = ref('');
+const state = ref('loading');
+const copySuccess = ref(false);
+const isUploading = ref(false);
+const uploadProgress = ref(0);
+const pageTitle = ref('Securely Share a File');
+const fileInfo = ref(null);
+
+const route = useRoute();
+
+onMounted(async () => {
+    await initializeState();
+});
+
+watch(
+    () => route.fullPath,
+    async () => {
+        await initializeState();
+    }
+);
+
+watch(
+    () => window.location.hash,
+    async () => {
+        await initializeState();
+    }
+);
+
+watch(state, (newState) => {
+    switch (newState) {
+        case 'downloaded':
+            pageTitle.value = 'File Downloaded';
+            break;
+        case 'input':
+            pageTitle.value = 'Share a File Securely';
+            break;
+        case 'generated':
+            pageTitle.value = 'Share a File Securely';
+            break;
+        case 'ready':
+            pageTitle.value = 'Download Shared File';
+            break;
+        case 'loading':
+            pageTitle.value = 'Share a File Securely';
+            break;
+        case 'not-found':
+            pageTitle.value = 'File Unavailable';
+            break;
+        default:
+            pageTitle.value = 'Share a File Securely';
+    }
+});
+
+watch(pageTitle, (newTitle) => {
+    document.title = newTitle;
+});
+
+async function initializeState() {
+    const { tokenBase64 } = getTokenAndKeyFromFragment();
+    if (tokenBase64) {
+        state.value = 'loading';
+        await checkFileExists();
+    } else {
+        state.value = 'input';
+    }
+}
+
+function handleFileSelection(event) {
+    selectedFile.value = event.target.files[0];
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+const submitFile = async () => {
+    if (!selectedFile.value) return;
+    
+    try {
+        isUploading.value = true;
+        state.value = 'loading';
+        uploadProgress.value = 0;
+
+        // Read the file as an ArrayBuffer
+        const fileArrayBuffer = await readFileAsArrayBuffer(selectedFile.value);
+        
+        // Generate encryption key and encrypt the file
+        const { encryptedFileBlob, ivBase64, encryptionKeyBase64 } = await encryptFile(fileArrayBuffer);
+        
+        // Generate a token for this file
+        const tokenBase64 = generateToken();
+        
+        // Create a FormData object to send the file
+        const formData = new FormData();
+        formData.append('token', tokenBase64);
+        formData.append('encryptedFile', encryptedFileBlob, 'encrypted-file');
+        formData.append('fileName', selectedFile.value.name);
+        formData.append('fileSize', formatFileSize(selectedFile.value.size));
+        formData.append('iv', ivBase64);
+        formData.append('expiry', Number(expiry.value));
+        
+        // Upload the encrypted file with progress tracking
+        await axios.post('/api/file/create', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                uploadProgress.value = percentCompleted;
+            }
+        });
+
+        // Construct the URL with the token and key in the fragment
+        generatedUrl.value = `${window.location.origin}/f#${tokenBase64}.${encryptionKeyBase64}`;
+
+        state.value = 'generated';
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        state.value = 'input';
+        alert('An error occurred while uploading your file. Please try again.');
+    } finally {
+        isUploading.value = false;
+    }
+};
+
+function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+async function encryptFile(fileArrayBuffer) {
+    // Generate a random encryption key (AES-256-GCM)
+    const key = await crypto.subtle.generateKey(
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['encrypt', 'decrypt']
+    );
+
+    // Export the key and encode it in URL-safe Base64
+    const exportedKey = await crypto.subtle.exportKey('raw', key);
+    const encryptionKeyBase64 = base64UrlEncode(exportedKey);
+
+    // Generate a random IV (Initialization Vector)
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    // Encrypt the file
+    const encryptedFileBuffer = await crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        key,
+        fileArrayBuffer
+    );
+
+    // Convert IV to URL-safe Base64
+    const ivBase64 = base64UrlEncode(iv);
+    
+    // Convert encrypted file to Blob
+    const encryptedFileBlob = new Blob([encryptedFileBuffer], { type: 'application/octet-stream' });
+
+    return {
+        encryptedFileBlob,
+        ivBase64,
+        encryptionKeyBase64,
+    };
+}
+
+function generateToken() {
+    // Generate a secure token (16 bytes)
+    const tokenBytes = crypto.getRandomValues(new Uint8Array(16));
+    return base64UrlEncode(tokenBytes);
+}
+
+const copyToClipboard = async (text) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        copySuccess.value = true;
+        // Reset the copy success indicator after 2 seconds
+        setTimeout(() => {
+            copySuccess.value = false;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
+};
+
+const checkFileExists = async () => {
+    const { tokenBase64 } = getTokenAndKeyFromFragment();
+
+    try {
+        const response = await axios.get(`/api/file/check/${tokenBase64}`);
+
+        if (response.data.exists) {
+            fileInfo.value = {
+                fileName: response.data.fileName,
+                fileSize: response.data.fileSize
+            };
+            state.value = 'ready';
+        } else {
+            state.value = 'not-found';
+        }
+    } catch (error) {
+        console.error('Error checking file existence:', error);
+        state.value = 'not-found';
+    }
+};
+
+function reset() {
+    selectedFile.value = null;
+    state.value = 'input';
+    uploadProgress.value = 0;
+}
+
+function getTokenAndKeyFromFragment() {
+    const fragment = window.location.hash.substring(1); // Remove the '#' character
+    const [tokenBase64, encryptionKeyBase64] = fragment.split('.');
+    return { tokenBase64, encryptionKeyBase64 };
+}
+
+function base64UrlEncode(arrayBuffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+function base64UrlDecode(base64UrlString) {
+    const base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+}
+
+const downloadFile = async () => {
+    const { tokenBase64, encryptionKeyBase64 } = getTokenAndKeyFromFragment();
+
+    if (tokenBase64 && encryptionKeyBase64 && state.value === 'ready') {
+        try {
+            state.value = 'loading';
+
+            // Fetch the file details from the server
+            const response = await axios.get(`/api/file/${tokenBase64}`);
+            
+            // Download the encrypted file from the signed URL
+            const fileResponse = await axios.get(response.data.fileUrl, {
+                responseType: 'arraybuffer',
+                onDownloadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    uploadProgress.value = percentCompleted;
+                }
+            });
+            
+            // Get the IV from the response
+            const ivBase64 = response.data.iv;
+            
+            // Decrypt the file
+            const decryptedFile = await decryptFile(
+                fileResponse.data,
+                ivBase64,
+                encryptionKeyBase64
+            );
+            
+            // Create a download link for the decrypted file
+            const downloadUrl = URL.createObjectURL(
+                new Blob([decryptedFile], { type: 'application/octet-stream' })
+            );
+            
+            // Create a temporary link element and trigger the download
+            const downloadLink = document.createElement('a');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = response.data.fileName; 
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Clean up the blob URL
+            URL.revokeObjectURL(downloadUrl);
+            
+            state.value = 'downloaded';
+        } catch (error) {
+            console.error('Error downloading file:', error);
+            state.value = 'not-found';
+        }
+    }
+};
+
+async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase64) {
+    // Decode the encryption key from URL-safe Base64
+    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
+    const key = await crypto.subtle.importKey(
+        'raw',
+        encryptionKeyBytes,
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['decrypt']
+    );
+
+    // Decode IV from URL-safe Base64
+    const iv = base64UrlDecode(ivBase64);
+
+    // Decrypt the file
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        key,
+        encryptedFileArrayBuffer
+    );
+
+    return decryptedBuffer;
+}
+</script>
+
+<style scoped>
+[v-cloak] {
+    display: none;
+}
+
+.file-upload {
+    margin-bottom: 1rem;
+}
+
+.file-label {
+    margin-top: 0;
+}
+
+.file-input {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f3f3f3;
+    border-radius: 4px;
+    margin: 10px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+}
+
+.progress-bar span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+}
+</style>

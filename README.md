@@ -1,31 +1,33 @@
-# One Time Password Sharing App
+# One Time Password & File Sharing App
 
-A secure, self-destructing password sharing application built with Vue.js and Laravel. Share passwords securely with end-to-end encryption - passwords are encrypted in the browser before being sent to the server and can only be viewed once before being permanently deleted.
+A secure, self-destructing password and file sharing application built with Vue.js and Laravel. Share passwords and files securely with end-to-end encryption - content is encrypted in the browser before being sent to the server and can only be viewed/downloaded once before being permanently deleted.
 
 ## Features
 
 - 🔒 End-to-end encryption using AES-256-GCM
-- 💥 Self-destructing passwords - viewed only once then deleted
+- 💥 Self-destructing passwords and files - viewed only once then deleted
 - ⏰ Configurable expiry times (5 minutes to 30 days)
 - 🔑 Client-side encryption/decryption using Web Crypto API
 - 📋 Easy copy-to-clipboard functionality
+- 📁 Secure file sharing with client-side encryption
 - 🎨 Clean, responsive user interface
 - ♿ Accessibility features included
 
 ## Security Features
 
-- Passwords are encrypted in the browser before transmission
+- Passwords and files are encrypted in the browser before transmission
 - Encryption keys never leave the client
-- Passwords are stored encrypted and deleted after first view
+- Content is stored encrypted and deleted after first view
 - Uses secure AES-256-GCM encryption
 - Implements URL-safe Base64 encoding for keys and tokens
-- Automatic expiry of unused passwords
+- Automatic expiry of unused passwords and files
 
 ## Technical Stack
 
 - **Frontend**: Vue 3 with Composition API
 - **Backend**: Laravel
 - **Database**: MySQL/PostgreSQL
+- **File Storage**: Amazon S3
 - **Encryption**: Web Crypto API (AES-256-GCM)
 - **HTTP Client**: Axios
 - **Routing**: Vue Router
@@ -48,12 +50,21 @@ composer install
 npm install
 ```
 
-4. Copy the environment file and configure your database:
+4. Copy the environment file and configure your database and S3:
 ```bash
 cp .env.example .env
 ```
 
-5. Generate application key:
+5. Configure S3 credentials in the .env file:
+```
+AWS_ACCESS_KEY_ID=your-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=your-region
+AWS_BUCKET=your-bucket-name
+AWS_URL=your-s3-url
+```
+
+6. Generate application key:
 ```bash
 php artisan key:generate
 ```
@@ -118,9 +129,15 @@ php artisan view:cache
 npm run build
 ```
 
-4. Configure cron to run this command every minute (or at least every 5 minute), which will clear out expired passwords:
+4. Configure cron to run these commands every minute (or at least every 5 minutes), which will clear out expired passwords and files:
 ```
 php artisan schedule:run
+```
+
+Or set up a custom schedule in `app/Console/Kernel.php`:
+```php
+$schedule->command('otps:delete-expired')->hourly();
+$schedule->command('files:delete-expired')->hourly();
 ```
 
 ## Customisation for Your Project

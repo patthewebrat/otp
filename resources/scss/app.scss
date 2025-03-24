@@ -21,6 +21,38 @@ body {
     p {
         margin: 10px 0;
     }
+    
+    /* Main Navigation */
+    .main-nav {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 15px 0;
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-start;
+            padding: 0 20px;
+        }
+        
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+            margin: 0 20px 0 0;
+            font-size: 1em;
+            
+            &:hover {
+                opacity: 1;
+            }
+        }
+        
+        .router-link-active {
+            opacity: 1;
+            font-weight: 600;
+        }
+    }
 
     /* App Container */
     #app {
@@ -29,6 +61,33 @@ body {
         margin: 0 auto;
         padding: 20px;
         box-sizing: border-box;
+        
+        /* Feature Navigation */
+        .feature-nav {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            
+            a, span {
+                padding: 10px 20px;
+                margin-right: 10px;
+                color: white;
+                text-decoration: none;
+                opacity: 0.7;
+                transition: opacity 0.3s;
+            }
+            
+            a:hover {
+                opacity: 1;
+            }
+            
+            .active-feature {
+                opacity: 1;
+                border-bottom: 2px solid white;
+                font-weight: 600;
+            }
+        }
 
         /* Header */
         h1 {
@@ -82,7 +141,7 @@ body {
         }
 
         /* Buttons */
-        button {
+        button, .file-label {
             margin-top: 20px;
             margin-right: 10px;
             padding: 10px 20px;
@@ -92,6 +151,7 @@ body {
             border: none;
             cursor: pointer;
             transition: background-color 0.3s;
+            display: inline-block;
 
             &:hover {
                 background-color: #ddd;
@@ -159,6 +219,7 @@ body {
             max-width: 1080px;
             white-space: nowrap;
             position: relative;
+            display: inline-block;
 
             &.view-password {
                 white-space: pre-wrap;
