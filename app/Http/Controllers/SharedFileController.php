@@ -105,4 +105,61 @@ class SharedFileController extends Controller
             ['Content-Type' => 'application/octet-stream']
         );
     }
+
+    /**
+     * Get maximum file upload size from PHP configuration
+     */
+    public function getMaxFileSize()
+    {
+        // Get the upload_max_filesize from php.ini and convert to bytes
+        $upload_max_filesize = $this->returnBytes(ini_get('upload_max_filesize'));
+        
+        // Get the post_max_size from php.ini and convert to bytes
+        $post_max_size = $this->returnBytes(ini_get('post_max_size'));
+        
+        // Use the smallest of the two values
+        $max_size = min($upload_max_filesize, $post_max_size);
+        
+        return response()->json([
+            'max_size' => $max_size,
+            'formatted_size' => $this->formatBytes($max_size)
+        ]);
+    }
+    
+    /**
+     * Convert shorthand size notation to bytes
+     */
+    private function returnBytes($val) 
+    {
+        $val = trim($val);
+        $last = strtolower($val[strlen($val)-1]);
+        $val = (int)$val;
+        
+        switch($last) {
+            case 'g':
+                $val *= 1024;
+            case 'm':
+                $val *= 1024;
+            case 'k':
+                $val *= 1024;
+        }
+        
+        return $val;
+    }
+    
+    /**
+     * Format bytes to human-readable format
+     */
+    private function formatBytes($bytes, $precision = 2) 
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        
+        $bytes /= pow(1024, $pow);
+        
+        return round($bytes, $precision) . ' ' . $units[$pow];
+    }
 }

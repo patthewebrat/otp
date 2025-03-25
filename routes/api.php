@@ -16,5 +16,6 @@ Route::get('/check/{combinedKey}', [OTPController::class, 'check']);
 
 // Shared file routes
 Route::post('/file/create', [SharedFileController::class, 'create']);
+Route::get('/file/max-size', [SharedFileController::class, 'getMaxFileSize']);
 Route::get('/file/check/{token}', [SharedFileController::class, 'check']);
 Route::get('/file/{token}', [SharedFileController::class, 'show']);

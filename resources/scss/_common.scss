@@ -1,0 +1,210 @@
+/* Common Component Styles */
+
+/* Layout Elements */
+.content-container {
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
+
+/* Form Elements */
+button, .button, .file-label {
+  margin-top: $spacing-lg;
+  margin-right: $spacing-sm;
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-base;
+  color: $secondary-color;
+  background-color: $primary-color;
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: background-color $transition-speed;
+  display: inline-block;
+
+  &:hover {
+    background-color: darken($primary-color, 10%);
+  }
+
+  &:disabled {
+    opacity: $opacity-inactive;
+    cursor: not-allowed;
+  }
+}
+
+input[type="text"], 
+input[type="password"], 
+input[type="email"],
+input[type="number"],
+textarea {
+  background-color: $primary-color ;
+  color: $background-color;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: $spacing-sm;
+  border-radius: $border-radius;
+  font-family: $font-family;
+  width: 100%;
+  max-width: $form-element-width;
+  height: 150px;
+  margin-bottom: $spacing-lg;
+  font-family: $monospace-font;
+  
+  &:focus {
+    outline: none;
+    border-color: $accent-color;
+    box-shadow: 0 0 5px rgba($accent-color, 0.5);
+  }
+}
+
+select {
+  background-color: transparent;
+  color: $primary-color;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: $spacing-sm;
+  font-size: $font-size-base;
+  cursor: pointer;
+  outline: none;
+  margin-left: $spacing-sm;
+  border-radius: $border-radius;
+
+  option {
+    background-color: $background-color;
+    color: $primary-color;
+  }
+
+  &:focus {
+    border-color: $accent-color;
+    box-shadow: 0 0 5px rgba($accent-color, 0.5);
+  }
+}
+
+/* Message Elements */
+.info-message {
+  font-size: $font-size-small;
+  opacity: $opacity-inactive;
+  margin: $spacing-xs 0 $spacing-sm 0;
+  font-style: italic;
+}
+
+.error-message {
+  background-color: rgba($error-color, 0.1);
+  border-left: 3px solid $error-color;
+  color: $error-color;
+  padding: $spacing-sm $spacing-md;
+  margin: $spacing-sm 0;
+  border-radius: 0 $border-radius $border-radius 0;
+  font-size: 0.9em;
+  max-width: $form-element-width;
+  
+  i {
+    margin-right: $spacing-xs;
+  }
+}
+
+.success-message {
+  background-color: rgba($success-color, 0.1);
+  border-left: 3px solid $success-color;
+  color: $success-color;
+  padding: $spacing-sm $spacing-md;
+  margin: $spacing-sm 0;
+  border-radius: 0 $border-radius $border-radius 0;
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  max-width: $form-element-width;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: $border-radius;
+  margin: $spacing-lg 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background-color: $accent-color;
+  background-image: linear-gradient(
+    45deg, 
+    rgba(255, 255, 255, 0.15) 25%, 
+    transparent 25%, 
+    transparent 50%, 
+    rgba(255, 255, 255, 0.15) 50%, 
+    rgba(255, 255, 255, 0.15) 75%, 
+    transparent 75%, 
+    transparent
+  );
+  background-size: 1rem 1rem;
+  transition: width $transition-speed ease;
+}
+
+.progress-bar span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: $primary-color;
+  text-shadow: $text-shadow;
+}
+
+/* Data Display */
+.data-format {
+  background-color: $primary-color;
+  color: $background-color;
+  font-family: $monospace-font;
+  padding: 20px 50px 20px 20px;
+  margin: $spacing-lg 0;
+  max-width: 1050px;
+  white-space: nowrap;
+  position: relative;
+  display: inline-block;
+  border-radius: $border-radius;
+  overflow: hidden;
+  width: 100%;
+  cursor: pointer;
+  
+  &.wrap-text {
+    white-space: pre-wrap;
+  }
+}
+
+/* Copy functionality */
+.copy-icon {
+  background: transparent;
+  color: $secondary-color;
+  border: none;
+  font-size: $font-size-large;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0 0 0;
+  background-color: #fff;
+  height: 100%;
+  width: 50px;
+  border-radius: 0;
+  
+  &:focus {
+    outline: none;
+  }
+  
+  i {
+    transition: color $transition-speed;
+    
+    &.fa-check {
+      color: $success-color;
+    }
+  }
+}
+
+/* Utility classes */
+.hidden {
+  display: none;
+}
+
+[v-cloak] {
+  display: none;
+}

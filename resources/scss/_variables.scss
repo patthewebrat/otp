@@ -1,0 +1,46 @@
+/* Theme Variables */
+$background-color: #181818;
+$app-background-color: #49346A;
+$primary-color: #fff;
+$secondary-color: #49346A;
+$accent-color: #7e57c2;
+$success-color: #4caf50;
+$error-color: #ff5252;
+$warning-color: #ffab40;
+$info-color: #64b5f6;
+
+/* Typography */
+$font-family: 'Montserrat', sans-serif;
+$monospace-font: 'Courier New', monospace;
+$font-size-small: 0.85em;
+$font-size-base: 1em;
+$font-size-large: 1.2em;
+$font-size-xlarge: 2em;
+
+/* Spacing */
+$spacing-xs: 5px;
+$spacing-sm: 10px;
+$spacing-md: 15px;
+$spacing-lg: 20px;
+$spacing-xl: 40px;
+
+/* Layout */
+$border-radius: 4px;
+$content-max-width: 1000px;
+$form-element-width: 500px;
+
+/* Transitions */
+$transition-speed: 0.3s;
+
+/* Z-index layers */
+$z-index-base: 1;
+$z-index-dropdown: 100;
+$z-index-modal: 1000;
+
+/* Effects */
+$box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+$text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+
+/* Opacity */
+$opacity-inactive: 0.7;
+$opacity-active: 1;

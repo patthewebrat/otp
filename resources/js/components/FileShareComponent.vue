@@ -28,20 +28,22 @@
                     This file is too large. Please select a file smaller than {{ formatFileSize(maxFileSize) }}.
                 </div>
             </div>
-            <div v-if="selectedFile">
-                <label for="expiry">Expiry Time: </label>
-                <select v-model.number="expiry" id="expiry" aria-label="Expiry time selection">
-                    <option value="5">5 minutes</option>
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="120">2 hours</option>
-                    <option value="300">5 hours</option>
-                    <option value="600">10 hours</option>
-                    <option value="1440">24 hours</option>
-                    <option value="2880">2 days</option>
-                    <option value="10080">7 days</option>
-                    <option value="43200">30 days</option>
-                </select>
+            <div v-if="selectedFile" class="file-upload-controls">
+                <div>
+                    <label for="expiry">Expiry Time: </label>
+                    <select v-model.number="expiry" id="expiry" aria-label="Expiry time selection">
+                        <option value="5">5 minutes</option>
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="120">2 hours</option>
+                        <option value="300">5 hours</option>
+                        <option value="600">10 hours</option>
+                        <option value="1440">24 hours</option>
+                        <option value="2880">2 days</option>
+                        <option value="10080">7 days</option>
+                        <option value="43200">30 days</option>
+                    </select>
+                </div>
                 <button 
                     @click="submitFile" 
                     :disabled="isUploading || fileTooLarge" 
@@ -109,13 +111,14 @@ const isUploading = ref(false);
 const uploadProgress = ref(0);
 const pageTitle = ref('Securely Share a File');
 const fileInfo = ref(null);
-// 10MB size limit - adjust as needed for your application
+// Default to 10MB, will be updated from server
 const maxFileSize = ref(10 * 1024 * 1024); 
 const fileTooLarge = ref(false);
 
 const route = useRoute();
 
 onMounted(async () => {
+    await fetchMaxFileSize();
     await initializeState();
 });
 
@@ -161,6 +164,18 @@ watch(state, (newState) => {
 watch(pageTitle, (newTitle) => {
     document.title = newTitle;
 });
+
+async function fetchMaxFileSize() {
+    try {
+        const response = await axios.get('/api/file/max-size');
+        if (response.data && response.data.max_size) {
+            maxFileSize.value = response.data.max_size;
+        }
+    } catch (error) {
+        console.error('Error fetching max file size:', error);
+        // Keep the default value if request fails
+    }
+}
 
 async function initializeState() {
     const { tokenBase64 } = getTokenAndKeyFromFragment();
@@ -480,5 +495,10 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
 
 .file-size-info {
     margin-top: 5px;
+    font-style: italic;
+}
+
+.file-upload-controls {
+    margin-top: 30px;
 }
 </style>
