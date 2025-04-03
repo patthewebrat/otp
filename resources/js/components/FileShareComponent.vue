@@ -3,9 +3,19 @@
         <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
-            <div v-if="uploadProgress > 0" class="progress-bar">
-                <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
-                <span>{{ uploadProgress }}%</span>
+            <div v-if="progressStage === 'encrypting' && encryptionProgress > 0" class="progress-container">
+                <p class="progress-label">Encrypting file...</p>
+                <div class="progress-bar">
+                    <div class="progress" :style="{ width: encryptionProgress + '%' }"></div>
+                    <span>{{ encryptionProgress }}%</span>
+                </div>
+            </div>
+            <div v-if="progressStage === 'uploading' && uploadProgress > 0" class="progress-container">
+                <p class="progress-label">Uploading to server...</p>
+                <div class="progress-bar">
+                    <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
+                    <span>{{ uploadProgress }}%</span>
+                </div>
             </div>
         </div>
 
@@ -51,9 +61,19 @@
                 >
                     {{ isUploading ? 'Encrypting & Uploading...' : 'Upload File' }}
                 </button>
-                <div v-if="uploadProgress > 0 && uploadProgress < 100" class="progress-bar">
-                    <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
-                    <span>{{ uploadProgress }}%</span>
+                <div v-if="progressStage === 'encrypting' && encryptionProgress > 0 && encryptionProgress < 100" class="progress-container">
+                    <p class="progress-label">Encrypting file...</p>
+                    <div class="progress-bar">
+                        <div class="progress" :style="{ width: encryptionProgress + '%' }"></div>
+                        <span>{{ encryptionProgress }}%</span>
+                    </div>
+                </div>
+                <div v-if="progressStage === 'uploading' && uploadProgress > 0 && uploadProgress < 100" class="progress-container">
+                    <p class="progress-label">Uploading to server...</p>
+                    <div class="progress-bar">
+                        <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
+                        <span>{{ uploadProgress }}%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -109,6 +129,8 @@ const state = ref('loading');
 const copySuccess = ref(false);
 const isUploading = ref(false);
 const uploadProgress = ref(0);
+const encryptionProgress = ref(0);
+const progressStage = ref(''); // 'encrypting' or 'uploading'
 const pageTitle = ref('Securely Share a File');
 const fileInfo = ref(null);
 // Default to 10MB, will be updated from server
@@ -225,12 +247,19 @@ const submitFile = async () => {
         isUploading.value = true;
         state.value = 'loading';
         uploadProgress.value = 0;
+        encryptionProgress.value = 0;
+        progressStage.value = 'encrypting';
 
         // Read the file as an ArrayBuffer
         const fileArrayBuffer = await readFileAsArrayBuffer(selectedFile.value);
         
         // Generate encryption key and encrypt the file
+        // The encryptFile function now internally updates encryptionProgress
         const { encryptedFileBlob, ivBase64, encryptionKeyBase64 } = await encryptFile(fileArrayBuffer);
+        
+        // Prepare for upload stage - reset progress
+        progressStage.value = 'uploading';
+        uploadProgress.value = 0;
         
         // Generate a token for this file
         const tokenBase64 = generateToken();
@@ -267,6 +296,7 @@ const submitFile = async () => {
         alert('An error occurred while uploading your file. Please try again.');
     } finally {
         isUploading.value = false;
+        progressStage.value = '';
     }
 };
 
@@ -280,6 +310,9 @@ function readFileAsArrayBuffer(file) {
 }
 
 async function encryptFile(fileArrayBuffer) {
+    progressStage.value = 'encrypting';
+    encryptionProgress.value = 5; // Start at 5% to show initial progress
+    
     // Generate a random encryption key (AES-256-GCM)
     const key = await crypto.subtle.generateKey(
         {
@@ -289,35 +322,56 @@ async function encryptFile(fileArrayBuffer) {
         true,
         ['encrypt', 'decrypt']
     );
+    encryptionProgress.value = 15;
 
     // Export the key and encode it in URL-safe Base64
     const exportedKey = await crypto.subtle.exportKey('raw', key);
     const encryptionKeyBase64 = base64UrlEncode(exportedKey);
+    encryptionProgress.value = 25;
 
     // Generate a random IV (Initialization Vector)
     const iv = crypto.getRandomValues(new Uint8Array(12));
+    encryptionProgress.value = 35;
 
-    // Encrypt the file
-    const encryptedFileBuffer = await crypto.subtle.encrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        fileArrayBuffer
-    );
+    // Simulate encryption progress since we can't get real-time updates from subtle.encrypt
+    // Start progress animation
+    const progressInterval = setInterval(() => {
+        if (encryptionProgress.value < 90) {
+            encryptionProgress.value += 1;
+        }
+    }, 50);
 
-    // Convert IV to URL-safe Base64
-    const ivBase64 = base64UrlEncode(iv);
-    
-    // Convert encrypted file to Blob
-    const encryptedFileBlob = new Blob([encryptedFileBuffer], { type: 'application/octet-stream' });
+    try {
+        // Encrypt the file
+        const encryptedFileBuffer = await crypto.subtle.encrypt(
+            {
+                name: 'AES-GCM',
+                iv: iv,
+            },
+            key,
+            fileArrayBuffer
+        );
+        
+        // Clear the progress interval
+        clearInterval(progressInterval);
+        encryptionProgress.value = 95;
 
-    return {
-        encryptedFileBlob,
-        ivBase64,
-        encryptionKeyBase64,
-    };
+        // Convert IV to URL-safe Base64
+        const ivBase64 = base64UrlEncode(iv);
+        
+        // Convert encrypted file to Blob
+        const encryptedFileBlob = new Blob([encryptedFileBuffer], { type: 'application/octet-stream' });
+        encryptionProgress.value = 100;
+        
+        return {
+            encryptedFileBlob,
+            ivBase64,
+            encryptionKeyBase64,
+        };
+    } catch (error) {
+        clearInterval(progressInterval);
+        throw error;
+    }
 }
 
 function generateToken() {
@@ -391,7 +445,9 @@ const downloadFile = async () => {
     if (tokenBase64 && encryptionKeyBase64 && state.value === 'ready') {
         try {
             state.value = 'loading';
-            uploadProgress.value = 0; // Reset progress
+            uploadProgress.value = 0;
+            encryptionProgress.value = 0;
+            progressStage.value = 'uploading'; // Start with download progress first
             
             // Fetch the file details from the server
             const response = await axios.get(`/api/file/${tokenBase64}`);
@@ -407,6 +463,17 @@ const downloadFile = async () => {
                 }
             });
             
+            // Switch to decryption progress
+            progressStage.value = 'encrypting';
+            encryptionProgress.value = 0;
+            
+            // Start progress animation for decryption
+            const progressInterval = setInterval(() => {
+                if (encryptionProgress.value < 90) {
+                    encryptionProgress.value += 1;
+                }
+            }, 50);
+            
             // Get the IV from the response
             const ivBase64 = response.data.iv;
             
@@ -416,6 +483,10 @@ const downloadFile = async () => {
                 ivBase64,
                 encryptionKeyBase64
             );
+            
+            // Clear the progress interval
+            clearInterval(progressInterval);
+            encryptionProgress.value = 100;
             
             // Create a download link for the decrypted file
             const downloadUrl = URL.createObjectURL(
@@ -437,6 +508,8 @@ const downloadFile = async () => {
         } catch (error) {
             console.error('Error downloading file:', error);
             state.value = 'not-found';
+        } finally {
+            progressStage.value = '';
         }
     }
 };
@@ -486,6 +559,18 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
 
 .file-link {
     font-weight: 500;
+}
+
+/* Progress bar container and label styles */
+.progress-container {
+    margin: 15px 0;
+}
+
+.progress-label {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
 }
 
 /* Override common styles as needed */
