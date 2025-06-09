@@ -12,6 +12,7 @@ A secure, self-destructing password and file sharing application built with Vue.
 - 📁 Secure file sharing with client-side encryption
 - 🎨 Clean, responsive user interface
 - ♿ Accessibility features included
+- 🛡️ IP-based access control for file uploads (optional whitelist)
 
 ## Security Features
 
@@ -21,6 +22,7 @@ A secure, self-destructing password and file sharing application built with Vue.
 - Uses secure AES-256-GCM encryption
 - Implements URL-safe Base64 encoding for keys and tokens
 - Automatic expiry of unused passwords and files
+- Optional IP-based access control for file upload functionality
 
 ## Technical Stack
 
@@ -55,13 +57,18 @@ npm install
 cp .env.example .env
 ```
 
-5. Configure S3 credentials in the .env file:
+5. Configure S3 credentials and optional IP restrictions in the .env file:
 ```
 AWS_ACCESS_KEY_ID=your-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-key
 AWS_DEFAULT_REGION=your-region
 AWS_BUCKET=your-bucket-name
 AWS_URL=your-s3-url
+
+# Optional: Restrict file uploads to specific IP addresses
+# Leave empty to allow all IPs to upload files
+# Comma-separated list of allowed IP addresses
+FILE_UPLOAD_WHITELIST=192.168.1.100,10.0.0.50
 ```
 
 6. Generate application key:
@@ -139,6 +146,18 @@ Or set up a custom schedule in `app/Console/Kernel.php`:
 $schedule->command('otps:delete-expired')->hourly();
 $schedule->command('files:delete-expired')->hourly();
 ```
+
+## IP Access Control
+
+The application includes optional IP-based access control for file uploads:
+
+- **No restrictions**: Leave `FILE_UPLOAD_WHITELIST` empty in `.env` - all users can upload files and access the interface
+- **IP whitelist**: Set `FILE_UPLOAD_WHITELIST` to a comma-separated list of allowed IP addresses
+- **Behavior with restrictions**:
+  - Users from whitelisted IPs see the full interface (password and file sharing)
+  - Users from non-whitelisted IPs see no navigation and cannot access upload features
+  - File downloads work for anyone with a valid secure URL regardless of IP
+- **Use cases**: Restrict file uploads to office networks, specific locations, or trusted IP ranges
 
 ## Customisation for Your Project
 

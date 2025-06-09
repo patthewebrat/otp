@@ -107,6 +107,28 @@ class SharedFileController extends Controller
     }
 
     /**
+     * Check if current IP is allowed to upload files
+     */
+    public function checkIPAccess(Request $request)
+    {
+        $whitelistConfig = config('app.file_upload_whitelist');
+        
+        // If no whitelist is configured, allow all IPs
+        if (empty($whitelistConfig)) {
+            return response()->json(['allowed' => true]);
+        }
+        
+        // Parse the whitelist
+        $whitelist = array_map('trim', explode(',', $whitelistConfig));
+        $clientIP = $request->ip();
+        
+        return response()->json([
+            'allowed' => in_array($clientIP, $whitelist),
+            'ip' => $clientIP
+        ]);
+    }
+
+    /**
      * Get maximum file upload size from PHP configuration
      */
     public function getMaxFileSize()

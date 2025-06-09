@@ -111,7 +111,8 @@
 
         <div v-else-if="state === 'not-found'">
             <p>Sorry, this file is unavailable or has expired.</p>
-            <button @click="reset">Share a new file</button>
+            <p v-if="!getTokenAndKeyFromFragment().tokenBase64">File sharing is not available from your location.</p>
+            <button @click="reset" v-if="getTokenAndKeyFromFragment().tokenBase64">Share a new file</button>
         </div>
     </div>
 </template>
@@ -140,6 +141,14 @@ const fileTooLarge = ref(false);
 const route = useRoute();
 
 onMounted(async () => {
+    // Check IP access first for file upload features
+    const hasUploadAccess = await checkIPAccess();
+    if (!hasUploadAccess && !getTokenAndKeyFromFragment().tokenBase64) {
+        // If no upload access and not accessing a file, show not found
+        state.value = 'not-found';
+        return;
+    }
+    
     await fetchMaxFileSize();
     await initializeState();
 });
@@ -186,6 +195,16 @@ watch(state, (newState) => {
 watch(pageTitle, (newTitle) => {
     document.title = newTitle;
 });
+
+async function checkIPAccess() {
+    try {
+        const response = await axios.get('/api/file/ip-access');
+        return response.data && response.data.allowed;
+    } catch (error) {
+        console.error('Error checking IP access:', error);
+        return false;
+    }
+}
 
 async function fetchMaxFileSize() {
     try {

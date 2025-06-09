@@ -43,6 +43,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File Upload IP Whitelist
+    |--------------------------------------------------------------------------
+    |
+    | This is a comma-separated list of IP addresses that are allowed to upload
+    | files. If empty, all IPs can upload files. This setting controls both
+    | the file upload endpoint access and frontend file tab visibility.
+    |
+    */
+
+    'file_upload_whitelist' => env('FILE_UPLOAD_WHITELIST', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

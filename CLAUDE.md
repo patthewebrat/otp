@@ -84,14 +84,19 @@ php artisan test --filter=TestName
 - File upload with encryption
 - S3 storage integration
 - Automatic cleanup of expired content
+- IP-based file upload restrictions (configurable whitelist)
 
 ## Environment Setup
-Requires HTTPS for WebCrypto API functionality. Configure S3 credentials in `.env`:
+Requires HTTPS for WebCrypto API functionality. Configure S3 credentials and optional IP whitelist in `.env`:
 ```
 AWS_ACCESS_KEY_ID=your-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-key
 AWS_DEFAULT_REGION=your-region
 AWS_BUCKET=your-bucket-name
+
+# Optional: Comma-separated list of IPs allowed to upload files
+# If empty, all IPs can upload files
+FILE_UPLOAD_WHITELIST=192.168.1.100,10.0.0.50
 ```
 
 ## Important Notes
