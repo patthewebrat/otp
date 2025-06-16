@@ -59,6 +59,11 @@ cp .env.example .env
 
 5. Configure S3 credentials and optional IP restrictions in the .env file:
 ```
+
+# Set your filesystem to point at S3 (or any other support provider)
+FILESYSTEM_DISK=s3
+
+# Set your AWS creds - be careful with these, make sure they are appriopriately tied down
 AWS_ACCESS_KEY_ID=your-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-key
 AWS_DEFAULT_REGION=your-region
@@ -74,6 +79,11 @@ FILE_UPLOAD_WHITELIST=192.168.1.100,10.0.0.50
 6. Generate application key:
 ```bash
 php artisan key:generate
+```
+
+7. Let the app know if you are proxying through Cloudflare, for correct IP tracking
+```
+USE_CLOUDFLARE_IP=true
 ```
 
 Note - WebCrypto will not function without HTTPS, as such you will require HTTPS in all environments.
