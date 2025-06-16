@@ -24,7 +24,7 @@ class SharedFileController extends Controller
 
         $expiryTime = Carbon::now()->addMinutes((int) $request->expiry);
         
-        // Use S3 if configured, otherwise fallback to local storage
+        // Use configured storage disk
         $disk = config('filesystems.default');
         $filePath = $request->file('encryptedFile')->store('encrypted-files', $disk);
 

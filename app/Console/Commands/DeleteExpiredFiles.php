@@ -21,7 +21,7 @@ class DeleteExpiredFiles extends Command
      *
      * @var string
      */
-    protected $description = 'Delete expired shared files from S3 and database';
+    protected $description = 'Delete expired shared files from storage and database';
 
     /**
      * Execute the console command.
@@ -30,11 +30,13 @@ class DeleteExpiredFiles extends Command
     {
         $expiredFiles = SharedFile::where('expires_at', '<', Carbon::now())->get();
         
+        $disk = config('filesystems.default');
         $count = 0;
+        
         foreach ($expiredFiles as $file) {
-            // Delete the file from S3
-            if (Storage::disk('s3')->exists($file->file_path)) {
-                Storage::disk('s3')->delete($file->file_path);
+            // Delete the file from configured storage disk
+            if (Storage::disk($disk)->exists($file->file_path)) {
+                Storage::disk($disk)->delete($file->file_path);
             }
             
             // Delete the record from the database
