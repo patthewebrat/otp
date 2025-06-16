@@ -97,15 +97,19 @@ class SharedFileController extends Controller
             abort(404, 'File not found on server.');
         }
         
-        // Mark as downloaded
+        // Get file contents first
+        $fileContents = Storage::disk($disk)->get($sharedFile->file_path);
+        
+        // Delete the actual file from storage
+        Storage::disk($disk)->delete($sharedFile->file_path);
+        
+        // Delete the database record
         $sharedFile->delete();
         
-        // Return the file as a download response
-        return Storage::disk($disk)->download(
-            $sharedFile->file_path, 
-            $sharedFile->file_name,
-            ['Content-Type' => 'application/octet-stream']
-        );
+        // Return the file contents as a download response
+        return response($fileContents)
+            ->header('Content-Type', 'application/octet-stream')
+            ->header('Content-Disposition', 'attachment; filename="' . $sharedFile->file_name . '"');
     }
 
     /**
