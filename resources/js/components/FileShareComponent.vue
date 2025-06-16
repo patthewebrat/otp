@@ -652,7 +652,7 @@ async function decryptFileName(encryptedFileName, ivBase64, encryptionKeyBase64)
     font-size: 0.9rem;
     margin-bottom: 5px;
     font-weight: 500;
-    color: #555;
+    color: white;
 }
 
 /* Override common styles as needed */
