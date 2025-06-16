@@ -17,15 +17,6 @@ export default defineConfig({
         vue(),
     ],
     server: {
-        https: {
-            key: fs.readFileSync(path.resolve(__dirname, 'certs/localhost-key.pem')),
-            cert: fs.readFileSync(path.resolve(__dirname, 'certs/localhost.pem')),
-        },
-        host: 'localhost',
-        cors: true,
-        hmr: {
-            protocol: 'wss',
-            host: 'localhost',
-        },
-    },
+       https: false
+    }
 });
