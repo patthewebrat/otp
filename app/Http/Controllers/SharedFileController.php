@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\SharedFile;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Traits\GetsClientIP;
 
 class SharedFileController extends Controller
 {
+    use GetsClientIP;
     public function create(Request $request)
     {
         $request->validate([
@@ -120,7 +122,7 @@ class SharedFileController extends Controller
         
         // Parse the whitelist
         $whitelist = array_map('trim', explode(',', $whitelistConfig));
-        $clientIP = $request->ip();
+        $clientIP = $this->getClientIP($request);
         
         return response()->json([
             'allowed' => in_array($clientIP, $whitelist),

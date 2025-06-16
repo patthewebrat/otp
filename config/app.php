@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cloudflare Proxy Configuration
+    |--------------------------------------------------------------------------
+    |
+    | When running behind Cloudflare proxy, set this to true to read the
+    | CF-Connecting-IP header for the client's real IP address. When false,
+    | uses Laravel's default request->ip() method.
+    |
+    */
+
+    'use_cloudflare_ip' => env('USE_CLOUDFLARE_IP', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

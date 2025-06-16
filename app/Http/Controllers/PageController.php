@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Traits\GetsClientIP;
 
 class PageController extends Controller
 {
+    use GetsClientIP;
     public function app(Request $request)
     {
         $whitelistConfig = config('app.file_upload_whitelist');
@@ -15,7 +17,7 @@ class PageController extends Controller
             $fileUploadAllowed = true;
         } else {
             $whitelist = array_map('trim', explode(',', $whitelistConfig));
-            $clientIP = $request->ip();
+            $clientIP = $this->getClientIP($request);
             $fileUploadAllowed = in_array($clientIP, $whitelist);
         }
         

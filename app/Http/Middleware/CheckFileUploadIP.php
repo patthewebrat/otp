@@ -5,9 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Http\Traits\GetsClientIP;
 
 class CheckFileUploadIP
 {
+    use GetsClientIP;
     /**
      * Handle an incoming request.
      *
@@ -24,7 +26,7 @@ class CheckFileUploadIP
         
         // Parse the whitelist
         $whitelist = array_map('trim', explode(',', $whitelistConfig));
-        $clientIP = $request->ip();
+        $clientIP = $this->getClientIP($request);
         
         // Check if client IP is in whitelist
         if (!in_array($clientIP, $whitelist)) {
