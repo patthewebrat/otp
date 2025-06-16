@@ -274,7 +274,7 @@ const submitFile = async () => {
         
         // Generate encryption key and encrypt the file
         // The encryptFile function now internally updates encryptionProgress
-        const { encryptedFileBlob, ivBase64, encryptionKeyBase64 } = await encryptFile(fileArrayBuffer);
+        const { encryptedFileBlob, ivBase64, encryptionKeyBase64, encryptedFileName } = await encryptFile(fileArrayBuffer, selectedFile.value.name);
         
         // Prepare for upload stage - reset progress
         progressStage.value = 'uploading';
@@ -287,7 +287,7 @@ const submitFile = async () => {
         const formData = new FormData();
         formData.append('token', tokenBase64);
         formData.append('encryptedFile', encryptedFileBlob, 'encrypted-file');
-        formData.append('fileName', selectedFile.value.name);
+        formData.append('fileName', encryptedFileName);
         formData.append('fileSize', formatFileSize(selectedFile.value.size));
         formData.append('iv', ivBase64);
         formData.append('expiry', Number(expiry.value));
@@ -328,7 +328,7 @@ function readFileAsArrayBuffer(file) {
     });
 }
 
-async function encryptFile(fileArrayBuffer) {
+async function encryptFile(fileArrayBuffer, fileName) {
     progressStage.value = 'encrypting';
     encryptionProgress.value = 5; // Start at 5% to show initial progress
     
@@ -375,8 +375,22 @@ async function encryptFile(fileArrayBuffer) {
         clearInterval(progressInterval);
         encryptionProgress.value = 95;
 
+        // Encrypt the filename using the same key and IV
+        const fileNameBuffer = new TextEncoder().encode(fileName);
+        const encryptedFileNameBuffer = await crypto.subtle.encrypt(
+            {
+                name: 'AES-GCM',
+                iv: iv,
+            },
+            key,
+            fileNameBuffer
+        );
+        
         // Convert IV to URL-safe Base64
         const ivBase64 = base64UrlEncode(iv);
+        
+        // Convert encrypted filename to Base64
+        const encryptedFileName = base64UrlEncode(encryptedFileNameBuffer);
         
         // Convert encrypted file to Blob
         const encryptedFileBlob = new Blob([encryptedFileBuffer], { type: 'application/octet-stream' });
@@ -386,6 +400,7 @@ async function encryptFile(fileArrayBuffer) {
             encryptedFileBlob,
             ivBase64,
             encryptionKeyBase64,
+            encryptedFileName,
         };
     } catch (error) {
         clearInterval(progressInterval);
@@ -413,14 +428,21 @@ const copyToClipboard = async (text) => {
 };
 
 const checkFileExists = async () => {
-    const { tokenBase64 } = getTokenAndKeyFromFragment();
+    const { tokenBase64, encryptionKeyBase64 } = getTokenAndKeyFromFragment();
 
     try {
         const response = await axios.get(`/api/file/check/${tokenBase64}`);
 
         if (response.data.exists) {
+            // Decrypt the filename for display
+            const decryptedFileName = await decryptFileName(
+                response.data.fileName,
+                response.data.iv,
+                encryptionKeyBase64
+            );
+            
             fileInfo.value = {
-                fileName: response.data.fileName,
+                fileName: decryptedFileName,
                 fileSize: response.data.fileSize
             };
             state.value = 'ready';
@@ -496,6 +518,13 @@ const downloadFile = async () => {
             // Get the IV from the response
             const ivBase64 = response.data.iv;
             
+            // Decrypt the filename
+            const decryptedFileName = await decryptFileName(
+                response.data.fileName,
+                ivBase64,
+                encryptionKeyBase64
+            );
+            
             // Decrypt the file
             const decryptedFile = await decryptFile(
                 fileResponse.data,
@@ -515,7 +544,7 @@ const downloadFile = async () => {
             // Create a temporary link element and trigger the download
             const downloadLink = document.createElement('a');
             downloadLink.href = downloadUrl;
-            downloadLink.download = response.data.fileName; 
+            downloadLink.download = decryptedFileName; 
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
@@ -561,6 +590,40 @@ async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase
     );
 
     return decryptedBuffer;
+}
+
+async function decryptFileName(encryptedFileName, ivBase64, encryptionKeyBase64) {
+    // Decode the encryption key from URL-safe Base64
+    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
+    const key = await crypto.subtle.importKey(
+        'raw',
+        encryptionKeyBytes,
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['decrypt']
+    );
+
+    // Decode IV from URL-safe Base64
+    const iv = base64UrlDecode(ivBase64);
+
+    // Decode encrypted filename from Base64
+    const encryptedFileNameBuffer = base64UrlDecode(encryptedFileName);
+
+    // Decrypt the filename
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        key,
+        encryptedFileNameBuffer
+    );
+
+    // Convert decrypted buffer to string
+    return new TextDecoder().decode(decryptedBuffer);
 }
 </script>
 

@@ -72,6 +72,7 @@ class SharedFileController extends Controller
                 'exists' => true,
                 'fileName' => $sharedFile->file_name,
                 'fileSize' => $sharedFile->file_size,
+                'iv' => $sharedFile->iv,
             ]);
         } else {
             return response()->json(['exists' => false, 'message' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.']);
