@@ -34,35 +34,6 @@ a {
     }
 }
 
-/* Main Navigation */
-.main-nav {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
-    
-    .nav-container {
-        max-width: $content-max-width;
-        margin: 0 auto;
-        display: flex;
-        gap: 1rem;
-    }
-    
-    .nav-item {
-        color: $primary-color;
-        text-decoration: none;
-        opacity: $opacity-inactive;
-        transition: opacity $transition-speed;
-        font-size: $font-size-base;
-        
-        &:hover {
-            opacity: $opacity-active;
-        }
-    }
-    
-    .router-link-active {
-        opacity: $opacity-active;
-        font-weight: 600;
-    }
-}
 
 /* App Container */
 #app {

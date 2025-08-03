@@ -121,6 +121,7 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
+import { useIPAccess } from '../composables/useIPAccess';
 
 // Reactive variables
 const selectedFile = ref(null);
@@ -140,9 +141,12 @@ const fileTooLarge = ref(false);
 
 const route = useRoute();
 
+// Use IP access composable
+const { hasFileUploadAccess, checkFileUploadAccess } = useIPAccess();
+
 onMounted(async () => {
     // Check IP access first for file upload features
-    const hasUploadAccess = await checkIPAccess();
+    const hasUploadAccess = await checkFileUploadAccess();
     if (!hasUploadAccess && !getTokenAndKeyFromFragment().tokenBase64) {
         // If no upload access and not accessing a file, show not found
         state.value = 'not-found';
@@ -196,15 +200,6 @@ watch(pageTitle, (newTitle) => {
     document.title = newTitle;
 });
 
-async function checkIPAccess() {
-    try {
-        const response = await axios.get('/api/file/ip-access');
-        return response.data && response.data.allowed;
-    } catch (error) {
-        console.error('Error checking IP access:', error);
-        return false;
-    }
-}
 
 async function fetchMaxFileSize() {
     try {

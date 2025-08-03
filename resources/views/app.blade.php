@@ -18,13 +18,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-<nav class="main-nav" id="main-nav" style="display: none;">
-    <div class="nav-container">
-        <a href="/" class="nav-item" id="password-link">Password Sharing</a>
-        <a href="/f" class="nav-item" id="file-link">File Sharing</a>
-    </div>
-</nav>
-
 <div id="app"></div>
 
 <footer>
