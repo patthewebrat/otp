@@ -282,7 +282,7 @@ const submitFile = async () => {
         
         // Generate encryption key and encrypt the file
         // The encryptFile function now internally updates encryptionProgress
-        const { encryptedFileBlob, ivBase64, encryptionKeyBase64, encryptedFileName } = await encryptFile(fileArrayBuffer, selectedFile.value.name);
+        const { encryptedFileBlob, ivFileBase64, ivNameBase64, encryptionKeyBase64, encryptedFileName } = await encryptFile(fileArrayBuffer, selectedFile.value.name);
         
         // Prepare for upload stage - reset progress
         progressStage.value = 'uploading';
@@ -297,7 +297,11 @@ const submitFile = async () => {
         formData.append('encryptedFile', encryptedFileBlob, 'encrypted-file');
         formData.append('fileName', encryptedFileName);
         formData.append('fileSize', formatFileSize(selectedFile.value.size));
-        formData.append('iv', ivBase64);
+        // New fields with separate IVs
+        formData.append('iv_file', ivFileBase64);
+        formData.append('iv_name', ivNameBase64);
+        // Backward-compat: include legacy single IV as the file IV
+        formData.append('iv', ivFileBase64);
         formData.append('expiry', Number(expiry.value));
         
         // Upload the encrypted file with progress tracking
@@ -348,8 +352,9 @@ async function encryptFile(fileArrayBuffer, fileName) {
     const encryptionKeyBase64 = await exportRawKeyBase64Url(key);
     encryptionProgress.value = 25;
 
-    // Generate a random IV (Initialization Vector)
-    const iv = generateIv(12);
+    // Generate separate IVs for file content and filename
+    const ivFile = generateIv(12);
+    const ivName = generateIv(12);
     encryptionProgress.value = 35;
 
     // Simulate encryption progress since we can't get real-time updates from subtle.encrypt
@@ -361,19 +366,20 @@ async function encryptFile(fileArrayBuffer, fileName) {
     }, 50);
 
     try {
-        // Encrypt the file
-        const encryptedFileBuffer = await encryptAesGcm(key, fileArrayBuffer, iv);
+        // Encrypt the file with its own IV
+        const encryptedFileBuffer = await encryptAesGcm(key, fileArrayBuffer, ivFile);
         
         // Clear the progress interval
         clearInterval(progressInterval);
         encryptionProgress.value = 95;
 
-        // Encrypt the filename using the same key and IV
+        // Encrypt the filename using the same key but a different IV
         const fileNameBuffer = encodeText(fileName);
-        const encryptedFileNameBuffer = await encryptAesGcm(key, fileNameBuffer, iv);
+        const encryptedFileNameBuffer = await encryptAesGcm(key, fileNameBuffer, ivName);
         
-        // Convert IV to URL-safe Base64
-        const ivBase64 = base64UrlEncode(iv);
+        // Convert IVs to URL-safe Base64
+        const ivFileBase64 = base64UrlEncode(ivFile);
+        const ivNameBase64 = base64UrlEncode(ivName);
         
         // Convert encrypted filename to Base64
         const encryptedFileName = base64UrlEncode(encryptedFileNameBuffer);
@@ -384,7 +390,8 @@ async function encryptFile(fileArrayBuffer, fileName) {
         
         return {
             encryptedFileBlob,
-            ivBase64,
+            ivFileBase64,
+            ivNameBase64,
             encryptionKeyBase64,
             encryptedFileName,
         };
@@ -415,9 +422,11 @@ const checkFileExists = async () => {
 
         if (response.data.exists) {
             // Decrypt the filename for display
+            // Prefer new iv_name/ivName if present; fallback to legacy iv
+            const ivNameBase64 = response.data.ivName || response.data.iv_name || response.data.iv;
             const decryptedFileName = await decryptFileName(
                 response.data.fileName,
-                response.data.iv,
+                ivNameBase64,
                 encryptionKeyBase64
             );
             
@@ -485,20 +494,21 @@ const downloadFile = async () => {
                 }
             }, 50);
             
-            // Get the IV from the response
-            const ivBase64 = response.data.iv;
+            // Get IVs from the response (fallback to legacy single IV)
+            const ivFileBase64 = response.data.ivFile || response.data.iv_file || response.data.iv;
+            const ivNameBase64 = response.data.ivName || response.data.iv_name || response.data.iv;
             
             // Decrypt the filename
             const decryptedFileName = await decryptFileName(
                 response.data.fileName,
-                ivBase64,
+                ivNameBase64,
                 encryptionKeyBase64
             );
             
             // Decrypt the file
             const decryptedFile = await decryptFile(
                 fileResponse.data,
-                ivBase64,
+                ivFileBase64,
                 encryptionKeyBase64
             );
             

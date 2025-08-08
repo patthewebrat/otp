@@ -18,7 +18,10 @@ class SharedFileController extends Controller
             'encryptedFile' => 'required|file',
             'fileName' => 'required|string',
             'fileSize' => 'required|string',
-            'iv' => 'required|string',
+            // Support new separate IVs, while remaining backward compatible
+            'iv_file' => 'required_without:iv|string',
+            'iv_name' => 'required_without:iv|string',
+            'iv' => 'required_without_all:iv_file,iv_name|string',
             'expiry' => 'required|integer|min:1',
         ]);
 
@@ -28,12 +31,19 @@ class SharedFileController extends Controller
         $disk = config('filesystems.default');
         $filePath = $request->file('encryptedFile')->store('encrypted-files', $disk);
 
+        // Determine IVs with fallback to legacy 'iv'
+        $ivFile = $request->input('iv_file', $request->input('iv'));
+        $ivName = $request->input('iv_name', $request->input('iv'));
+
         $sharedFile = SharedFile::create([
             'token' => $request->token,
             'file_path' => $filePath,
             'file_name' => $request->fileName,
             'file_size' => $request->fileSize,
-            'iv' => $request->iv,
+            // Keep legacy iv populated for backward compatibility
+            'iv' => $ivFile,
+            'iv_file' => $ivFile,
+            'iv_name' => $ivName,
             'expires_at' => $expiryTime,
         ]);
 
@@ -54,7 +64,11 @@ class SharedFileController extends Controller
                 'fileUrl' => $fileUrl,
                 'fileName' => $sharedFile->file_name,
                 'fileSize' => $sharedFile->file_size,
+                // Legacy single IV (file IV)
                 'iv' => $sharedFile->iv,
+                // New explicit IVs
+                'ivFile' => $sharedFile->iv_file ?? $sharedFile->iv,
+                'ivName' => $sharedFile->iv_name ?? $sharedFile->iv,
             ]);
         } else {
             return response()->json(['error' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.'], 404);
@@ -72,7 +86,11 @@ class SharedFileController extends Controller
                 'exists' => true,
                 'fileName' => $sharedFile->file_name,
                 'fileSize' => $sharedFile->file_size,
+                // Legacy single IV (file IV)
                 'iv' => $sharedFile->iv,
+                // New explicit IVs
+                'ivFile' => $sharedFile->iv_file ?? $sharedFile->iv,
+                'ivName' => $sharedFile->iv_name ?? $sharedFile->iv,
             ]);
         } else {
             return response()->json(['exists' => false, 'message' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.']);
