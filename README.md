@@ -157,6 +157,16 @@ $schedule->command('otps:delete-expired')->hourly();
 $schedule->command('files:delete-expired')->hourly();
 ```
 
+### Hosting Under a Subpath (Router Base)
+
+If you deploy the app under a subpath (for example, `https://example.com/otp/` instead of the domain root), set the Vite base so that Vue Router and built assets resolve correctly.
+
+- Set the base path (note the trailing slash):
+  - Environment: `VITE_BASE=/otp/`
+  - Then rebuild: `npm run build`
+- The router uses `import.meta.env.BASE_URL` automatically, so client‑side navigation and deep links like `/otp/f` work correctly.
+- Ensure your web server routes all requests under `/otp/*` to this Laravel app so the SPA can handle them.
+
 ## IP Access Control
 
 The application includes optional IP-based access control for file uploads:
