@@ -7,19 +7,13 @@
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.1.3",
-        "axios": "^1.7.7",
         "laravel-vite-plugin": "^1.0",
         "sass": "^1.78.0",
-        "sass-loader": "^16.0.1",
         "vite": "^5.0"
     },
     "dependencies": {
-        "and": "^0.0.3",
-        "build": "^0.1.4",
-        "npm": "^11.5.2",
-        "run": "^1.5.0",
+        "axios": "^1.7.7",
         "vue": "^3.4.38",
-        "vue-loader": "^17.4.2",
         "vue-router": "^4.4.3"
     }
 }
