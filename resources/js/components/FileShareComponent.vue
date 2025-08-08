@@ -121,7 +121,20 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
-import { useIPAccess } from '../composables/useIPAccess';
+import { useIPAccess } from '../utils/useIPAccess';
+import {
+    base64UrlEncode,
+    base64UrlDecode,
+    generateToken,
+    generateAesGcmKey,
+    exportRawKeyBase64Url,
+    importRawKeyBase64Url,
+    encryptAesGcm,
+    decryptAesGcm,
+    generateIv,
+    encodeText,
+    decodeText,
+} from '../utils/crypto';
 
 // Reactive variables
 const selectedFile = ref(null);
@@ -328,23 +341,15 @@ async function encryptFile(fileArrayBuffer, fileName) {
     encryptionProgress.value = 5; // Start at 5% to show initial progress
     
     // Generate a random encryption key (AES-256-GCM)
-    const key = await crypto.subtle.generateKey(
-        {
-            name: 'AES-GCM',
-            length: 256,
-        },
-        true,
-        ['encrypt', 'decrypt']
-    );
+    const key = await generateAesGcmKey();
     encryptionProgress.value = 15;
 
     // Export the key and encode it in URL-safe Base64
-    const exportedKey = await crypto.subtle.exportKey('raw', key);
-    const encryptionKeyBase64 = base64UrlEncode(exportedKey);
+    const encryptionKeyBase64 = await exportRawKeyBase64Url(key);
     encryptionProgress.value = 25;
 
     // Generate a random IV (Initialization Vector)
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const iv = generateIv(12);
     encryptionProgress.value = 35;
 
     // Simulate encryption progress since we can't get real-time updates from subtle.encrypt
@@ -357,29 +362,15 @@ async function encryptFile(fileArrayBuffer, fileName) {
 
     try {
         // Encrypt the file
-        const encryptedFileBuffer = await crypto.subtle.encrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-            },
-            key,
-            fileArrayBuffer
-        );
+        const encryptedFileBuffer = await encryptAesGcm(key, fileArrayBuffer, iv);
         
         // Clear the progress interval
         clearInterval(progressInterval);
         encryptionProgress.value = 95;
 
         // Encrypt the filename using the same key and IV
-        const fileNameBuffer = new TextEncoder().encode(fileName);
-        const encryptedFileNameBuffer = await crypto.subtle.encrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-            },
-            key,
-            fileNameBuffer
-        );
+        const fileNameBuffer = encodeText(fileName);
+        const encryptedFileNameBuffer = await encryptAesGcm(key, fileNameBuffer, iv);
         
         // Convert IV to URL-safe Base64
         const ivBase64 = base64UrlEncode(iv);
@@ -401,12 +392,6 @@ async function encryptFile(fileArrayBuffer, fileName) {
         clearInterval(progressInterval);
         throw error;
     }
-}
-
-function generateToken() {
-    // Generate a secure token (16 bytes)
-    const tokenBytes = crypto.getRandomValues(new Uint8Array(16));
-    return base64UrlEncode(tokenBytes);
 }
 
 const copyToClipboard = async (text) => {
@@ -463,17 +448,7 @@ function getTokenAndKeyFromFragment() {
     return { tokenBase64, encryptionKeyBase64 };
 }
 
-function base64UrlEncode(arrayBuffer) {
-    return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-}
-
-function base64UrlDecode(base64UrlString) {
-    const base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
-    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-}
+// base64 helpers moved to utils/crypto
 
 const downloadFile = async () => {
     const { tokenBase64, encryptionKeyBase64 } = getTokenAndKeyFromFragment();
@@ -559,47 +534,20 @@ const downloadFile = async () => {
 
 async function decryptFile(encryptedFileArrayBuffer, ivBase64, encryptionKeyBase64) {
     // Decode the encryption key from URL-safe Base64
-    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
-    const key = await crypto.subtle.importKey(
-        'raw',
-        encryptionKeyBytes,
-        {
-            name: 'AES-GCM',
-            length: 256,
-        },
-        true,
-        ['decrypt']
-    );
+    const key = await importRawKeyBase64Url(encryptionKeyBase64);
 
     // Decode IV from URL-safe Base64
     const iv = base64UrlDecode(ivBase64);
 
     // Decrypt the file
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        encryptedFileArrayBuffer
-    );
+    const decryptedBuffer = await decryptAesGcm(key, encryptedFileArrayBuffer, iv);
 
     return decryptedBuffer;
 }
 
 async function decryptFileName(encryptedFileName, ivBase64, encryptionKeyBase64) {
     // Decode the encryption key from URL-safe Base64
-    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
-    const key = await crypto.subtle.importKey(
-        'raw',
-        encryptionKeyBytes,
-        {
-            name: 'AES-GCM',
-            length: 256,
-        },
-        true,
-        ['decrypt']
-    );
+    const key = await importRawKeyBase64Url(encryptionKeyBase64);
 
     // Decode IV from URL-safe Base64
     const iv = base64UrlDecode(ivBase64);
@@ -608,17 +556,10 @@ async function decryptFileName(encryptedFileName, ivBase64, encryptionKeyBase64)
     const encryptedFileNameBuffer = base64UrlDecode(encryptedFileName);
 
     // Decrypt the filename
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        encryptedFileNameBuffer
-    );
+    const decryptedBuffer = await decryptAesGcm(key, encryptedFileNameBuffer, iv);
 
     // Convert decrypted buffer to string
-    return new TextDecoder().decode(decryptedBuffer);
+    return decodeText(decryptedBuffer);
 }
 </script>
 

@@ -75,6 +75,19 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
+import {
+    base64UrlEncode,
+    base64UrlDecode,
+    generateToken,
+    generateAesGcmKey,
+    exportRawKeyBase64Url,
+    importRawKeyBase64Url,
+    encryptAesGcm,
+    decryptAesGcm,
+    generateIv,
+    encodeText,
+    decodeText,
+} from '../utils/crypto';
 
 // Reactive variables
 const password = ref('');
@@ -180,35 +193,19 @@ const submitPassword = async () => {
 
 async function encryptPassword(passwordText) {
     // Generate a random encryption key (AES-256-GCM)
-    const key = await crypto.subtle.generateKey(
-        {
-            name: 'AES-GCM',
-            length: 256,
-        },
-        true,
-        ['encrypt', 'decrypt']
-    );
+    const key = await generateAesGcmKey();
 
     // Export the key and encode it in URL-safe Base64
-    const exportedKey = await crypto.subtle.exportKey('raw', key);
-    const encryptionKeyBase64 = base64UrlEncode(exportedKey);
+    const encryptionKeyBase64 = await exportRawKeyBase64Url(key);
 
     // Encode the password to an ArrayBuffer
-    const enc = new TextEncoder();
-    const passwordBuffer = enc.encode(passwordText);
+    const passwordBuffer = encodeText(passwordText);
 
     // Generate a random IV (Initialization Vector)
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const iv = generateIv(12);
 
     // Encrypt the password
-    const encryptedPasswordBuffer = await crypto.subtle.encrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        passwordBuffer
-    );
+    const encryptedPasswordBuffer = await encryptAesGcm(key, passwordBuffer, iv);
 
     // Convert encrypted password and IV to URL-safe Base64
     const encryptedPasswordBase64 = base64UrlEncode(encryptedPasswordBuffer);
@@ -219,12 +216,6 @@ async function encryptPassword(passwordText) {
         ivBase64,
         encryptionKeyBase64,
     };
-}
-
-function generateToken() {
-    // Generate a secure token (16 bytes)
-    const tokenBytes = crypto.getRandomValues(new Uint8Array(16));
-    return base64UrlEncode(tokenBytes);
 }
 
 const copyToClipboard = async (text) => {
@@ -268,18 +259,6 @@ function getTokenAndKeyFromFragment() {
     return { tokenBase64, encryptionKeyBase64 };
 }
 
-function base64UrlEncode(arrayBuffer) {
-    return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-}
-
-function base64UrlDecode(base64UrlString) {
-    const base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
-    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-}
-
 const viewPassword = async () => {
     const { tokenBase64, encryptionKeyBase64 } = getTokenAndKeyFromFragment();
 
@@ -309,35 +288,17 @@ const viewPassword = async () => {
 
 async function decryptPassword(encryptedPasswordBase64, ivBase64, encryptionKeyBase64) {
     // Decode the encryption key from URL-safe Base64
-    const encryptionKeyBytes = base64UrlDecode(encryptionKeyBase64);
-    const key = await crypto.subtle.importKey(
-        'raw',
-        encryptionKeyBytes,
-        {
-            name: 'AES-GCM',
-            length: 256,
-        },
-        true,
-        ['decrypt']
-    );
+    const key = await importRawKeyBase64Url(encryptionKeyBase64);
 
     // Decode encrypted password and IV from URL-safe Base64
     const encryptedPasswordBuffer = base64UrlDecode(encryptedPasswordBase64);
     const iv = base64UrlDecode(ivBase64);
 
     // Decrypt the password
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        key,
-        encryptedPasswordBuffer
-    );
+    const decryptedBuffer = await decryptAesGcm(key, encryptedPasswordBuffer, iv);
 
     // Decode the decrypted password
-    const dec = new TextDecoder();
-    return dec.decode(decryptedBuffer);
+    return decodeText(decryptedBuffer);
 }
 </script>
 

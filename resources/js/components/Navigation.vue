@@ -25,13 +25,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useIPAccess } from '../composables/useIPAccess'
+import { useIPAccess } from '../utils/useIPAccess'
 
 // Reactive state
 const activeRoute = ref('password')
 const route = useRoute()
 
-// Use IP access composable
+// Use IP access utility to check file upload access
 const { hasFileUploadAccess, checkFileUploadAccess } = useIPAccess()
 
 // Computed properties
