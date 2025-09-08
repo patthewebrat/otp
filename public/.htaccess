@@ -19,3 +19,43 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+  # Content Security Policy (no nonces, no unsafe-inline)
+  Header set Content-Security-Policy "default-src 'self'; \
+    script-src 'self' cdnjs.cloudflare.com otp.indulge.digital; \
+    style-src 'self' fonts.googleapis.com cdnjs.cloudflare.com otp.indulge.digital; \
+    img-src 'self' data: blob: indulge.digital otp.indulge.digital; \
+    font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com data:; \
+    connect-src 'self' otp.indulge.digital; \
+    object-src 'none'; \
+    base-uri 'self'; \
+    form-action 'self'; \
+    frame-ancestors 'none'; \
+    frame-src 'none'; \
+    worker-src 'self' blob:; \
+    manifest-src 'self'; \
+    upgrade-insecure-requests; \
+    require-trusted-types-for 'script'"
+
+  # Prevent MIME type sniffing
+  Header set X-Content-Type-Options "nosniff"
+
+  # Prevent clickjacking
+  Header set X-Frame-Options "DENY"
+
+  # Referrer policy
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Cross-Origin policies
+  Header set Cross-Origin-Resource-Policy "same-origin"
+  Header set Cross-Origin-Opener-Policy "same-origin"
+  Header set Cross-Origin-Embedder-Policy "require-corp"
+
+  # Permissions policy (disable unused APIs)
+  Header set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+
+  # Enforce HTTPS with HSTS
+  Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+</IfModule>
