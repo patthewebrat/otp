@@ -9,7 +9,7 @@
     <!-- Open Graph Tags -->
     <meta property="og:title" content="Securely Share Passwords and Files | OTP Tool">
     <meta property="og:description" content="Securely share passwords and files with end-to-end encryption. Content self-destructs after viewing. Your data is protected with AES-GCM-256 encryption.">
-    <meta property="og:image" content="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg">
+    <meta property="og:image" content="/images/logo-light.svg">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="OTP Tool">
@@ -22,7 +22,7 @@
 
 <footer>
     <p><a href="https://indulge.digital" target="_new">
-        <img src="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
+        <img src="/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
     </a></p>
     <p><strong>How it works:</strong> This app uses AES-GCM-256 based client-side encryption to securely share one-time passwords 
     @if($file_upload_allowed)

@@ -11,7 +11,7 @@
     <!-- Open Graph Tags -->
     <meta property="og:title" content="{{ request()->is('v') ? 'View Password' : 'Securely Share a Password | OTP Tool' }}">
     <meta property="og:description" content="{{ request()->is('v') ? 'A password has been securely shared with you. View it now before it self-destructs. Your data is protected with AES-GCM-256 encryption.' : 'Securely generate and share one-time passwords that self-destruct after use. Your data stays private with AES-GCM-256 encryption.' }}">
-    <meta property="og:image" content="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg">
+    <meta property="og:image" content="/images/logo-light.svg">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="OTP Tool">
@@ -25,7 +25,7 @@
 <footer>
 
     <p><a href="https://indulge.digital" target="_new">
-        <img src="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
+        <img src="/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
     </a></p>
     <p><strong>How it works:</strong> This app uses AES-GCM-256 based client-side encryption to securely generate and share one-time passwords that self-destruct after use. Neither the unencrypted password or the encryption key are ever sent to our servers. The encrypted password is the only piece of information stored on our servers.</p>
     <p><strong>About:</strong> <a href="https://indulge.digital/blog/i-built-password-sharing-tool-ai-and-here%E2%80%99s-what-i-learnt" target="_blank">Learn about why this tool exists</a>.</p>

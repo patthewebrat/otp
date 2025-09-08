@@ -11,7 +11,7 @@
     <!-- Open Graph Tags -->
     <meta property="og:title" content="{{ request()->is('f') ? 'Securely Share a File | OTP Tool' : 'Download Shared File' }}">
     <meta property="og:description" content="{{ request()->is('f') ? 'Securely share files that self-destruct after download. Your data is protected with AES-GCM-256 encryption.' : 'A file has been securely shared with you. Download it now before it self-destructs. Your data is protected with AES-GCM-256 encryption.' }}">
-    <meta property="og:image" content="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg">
+    <meta property="og:image" content="/images/logo-light.svg">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="OTP Tool">
@@ -24,7 +24,7 @@
 
 <footer>
     <p><a href="https://indulge.digital" target="_new">
-        <img src="https://indulge.digital/sites/all/themes/indulgev4/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
+        <img src="/images/logo-light.svg" alt="Indulge Media Ltd Logo" title="Indulge"/>
     </a></p>
     <p><strong>How it works:</strong> This app uses AES-GCM-256 based client-side encryption to securely share files that self-destruct after download. Neither the unencrypted file or the encryption key are ever sent to our servers. Only the encrypted file is stored on our secure servers.</p>
     <p><strong>About:</strong> <a href="https://indulge.digital/blog/i-built-password-sharing-tool-ai-and-here%E2%80%99s-what-i-learnt" target="_blank">Learn about why this tool exists</a>.</p>
