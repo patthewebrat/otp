@@ -35,8 +35,7 @@
     frame-src 'none'; \
     worker-src 'self' blob:; \
     manifest-src 'self'; \
-    upgrade-insecure-requests; \
-    require-trusted-types-for 'script'"
+    upgrade-insecure-requests;"
 
   # Prevent MIME type sniffing
   Header set X-Content-Type-Options "nosniff"
