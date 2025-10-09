@@ -319,5 +319,6 @@ async function decryptPassword(encryptedPasswordBase64, ivBase64, encryptionKeyB
 
 .view-password {
     cursor: pointer;
+    white-space: pre-wrap;
 }
 </style>
