@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\SharedFile;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteExpiredFiles extends Command
@@ -28,7 +28,7 @@ class DeleteExpiredFiles extends Command
      */
     public function handle()
     {
-        $expiredFiles = SharedFile::where('expires_at', '<', Carbon::now())->get();
+        $expiredFiles = SharedFile::where('expires_at', '<', Date::now())->get();
 
         $disk = config('filesystems.default');
         $count = 0;

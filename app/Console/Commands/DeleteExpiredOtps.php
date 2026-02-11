@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\OTP;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Date;
 
 class DeleteExpiredOtps extends Command
 {
@@ -19,7 +19,7 @@ class DeleteExpiredOtps extends Command
 
     public function handle()
     {
-        $now = Carbon::now();
+        $now = Date::now();
         $deletedRows = Otp::where('expires_at', '<', $now)->delete();
 
         $this->info($deletedRows . ' expired OTP(s) deleted.');

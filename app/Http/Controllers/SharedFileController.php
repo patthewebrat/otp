@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsClientIP;
 use App\Models\SharedFile;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
 
 class SharedFileController extends Controller
@@ -15,18 +15,18 @@ class SharedFileController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'token' => 'required|string',
-            'encryptedFile' => 'required|file',
-            'fileName' => 'required|string',
-            'fileSize' => 'required|string',
+            'token' => ['required', 'string'],
+            'encryptedFile' => ['required', 'file'],
+            'fileName' => ['required', 'string'],
+            'fileSize' => ['required', 'string'],
             // Support new separate IVs, while remaining backward compatible
-            'iv_file' => 'required_without:iv|string',
-            'iv_name' => 'required_without:iv|string',
-            'iv' => 'required_without_all:iv_file,iv_name|string',
-            'expiry' => 'required|integer|min:1',
+            'iv_file' => ['required_without:iv', 'string'],
+            'iv_name' => ['required_without:iv', 'string'],
+            'iv' => ['required_without_all:iv_file,iv_name', 'string'],
+            'expiry' => ['required', 'integer', 'min:1'],
         ]);
 
-        $expiryTime = Carbon::now()->addMinutes((int) $request->expiry);
+        $expiryTime = Date::now()->addMinutes((int) $request->expiry);
 
         // Use configured storage disk
         $disk = config('filesystems.default');
@@ -54,7 +54,7 @@ class SharedFileController extends Controller
     public function show($token)
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', Date::now())
             ->first();
 
         if ($sharedFile) {
@@ -79,7 +79,7 @@ class SharedFileController extends Controller
     public function check($token)
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', Date::now())
             ->first();
 
         if ($sharedFile) {
@@ -104,18 +104,14 @@ class SharedFileController extends Controller
     public function download($token)
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', Date::now())
             ->first();
 
-        if (!$sharedFile) {
-            abort(404, 'File not found or has expired.');
-        }
+        abort_unless($sharedFile, 404, 'File not found or has expired.');
 
         $disk = config('filesystems.default');
 
-        if (!Storage::disk($disk)->exists($sharedFile->file_path)) {
-            abort(404, 'File not found on server.');
-        }
+        abort_unless(Storage::disk($disk)->exists($sharedFile->file_path), 404, 'File not found on server.');
 
         // Get file contents first
         $fileContents = Storage::disk($disk)->get($sharedFile->file_path);
@@ -145,7 +141,7 @@ class SharedFileController extends Controller
         }
 
         // Parse the whitelist
-        $whitelist = array_map('trim', explode(',', $whitelistConfig));
+        $whitelist = array_map(trim(...), explode(',', (string) $whitelistConfig));
         $clientIP = $this->getClientIP($request);
 
         return response()->json([
@@ -179,7 +175,7 @@ class SharedFileController extends Controller
      */
     private function returnBytes($val)
     {
-        $val = trim($val);
+        $val = trim((string) $val);
         $last = strtolower($val[strlen($val) - 1]);
         $val = (int) $val;
 
@@ -206,7 +202,7 @@ class SharedFileController extends Controller
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
 
-        $bytes /= pow(1024, $pow);
+        $bytes /= 1024 ** $pow;
 
         return round($bytes, $precision) . ' ' . $units[$pow];
     }

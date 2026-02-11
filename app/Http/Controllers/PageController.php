@@ -17,7 +17,7 @@ class PageController extends Controller
         if (empty($whitelistConfig)) {
             $fileUploadAllowed = true;
         } else {
-            $whitelist = array_map('trim', explode(',', $whitelistConfig));
+            $whitelist = array_map(trim(...), explode(',', (string) $whitelistConfig));
             $clientIP = $this->getClientIP($request);
             $fileUploadAllowed = in_array($clientIP, $whitelist);
         }

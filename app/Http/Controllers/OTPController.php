@@ -3,21 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\OTP;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 
 class OTPController extends Controller
 {
     public function create(Request $request)
     {
         $request->validate([
-            'token' => 'required|string',
-            'encryptedPassword' => 'required|string',
-            'iv' => 'required|string',
-            'expiry' => 'required|integer|min:1',
+            'token' => ['required', 'string'],
+            'encryptedPassword' => ['required', 'string'],
+            'iv' => ['required', 'string'],
+            'expiry' => ['required', 'integer', 'min:1'],
         ]);
 
-        $expiryTime = Carbon::now()->addMinutes($request->expiry);
+        $expiryTime = Date::now()->addMinutes($request->expiry);
 
         // Store the Base64-encoded token directly
         $otp = OTP::create([
@@ -34,7 +34,7 @@ class OTPController extends Controller
     public function show($tokenBase64)
     {
         $otp = OTP::where('token', $tokenBase64)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', Date::now())
             ->first();
 
         if ($otp) {
@@ -53,7 +53,7 @@ class OTPController extends Controller
     public function check($token)
     {
         $otp = OTP::where('token', $token)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', Date::now())
             ->first();
 
         if ($otp) {
