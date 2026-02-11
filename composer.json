@@ -12,6 +12,7 @@
         "league/flysystem-aws-s3-v3": "^3.29"
     },
     "require-dev": {
+        "driftingly/rector-laravel": "^2.1",
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
@@ -46,6 +47,25 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
+        ],
+        "lint": [
+            "rector",
+            "pint"
+        ],
+        "test:lint": [
+            "rector --dry-run",
+            "pint --test"
+        ],
+        "test:unit": [
+            "phpunit"
+        ],
+        "test:type": [
+            "phpstan analyse"
+        ],
+        "test": [
+            "@test:lint",
+            "@test:unit",
+            "@test:type"
         ]
     },
     "extra": {
