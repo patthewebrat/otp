@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\SharedFile;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteExpiredFiles extends Command
@@ -26,9 +25,9 @@ class DeleteExpiredFiles extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
-        $expiredFiles = SharedFile::where('expires_at', '<', Date::now())->get();
+        $expiredFiles = SharedFile::where('expires_at', '<', now())->get();
 
         $disk = config('filesystems.default');
         $count = 0;

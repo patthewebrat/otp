@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsClientIP;
 use App\Models\SharedFile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Date;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
 class SharedFileController extends Controller
 {
     use GetsClientIP;
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $request->validate([
             'token' => ['required', 'string'],
@@ -26,7 +27,7 @@ class SharedFileController extends Controller
             'expiry' => ['required', 'integer', 'min:1'],
         ]);
 
-        $expiryTime = Date::now()->addMinutes((int) $request->expiry);
+        $expiryTime = now()->addMinutes((int) $request->expiry);
 
         // Use configured storage disk
         $disk = config('filesystems.default');
@@ -51,10 +52,10 @@ class SharedFileController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function show($token)
+    public function show(string $token): JsonResponse
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Date::now())
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($sharedFile) {
@@ -76,10 +77,10 @@ class SharedFileController extends Controller
         }
     }
 
-    public function check($token)
+    public function check(string $token): JsonResponse
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Date::now())
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($sharedFile) {
@@ -101,13 +102,13 @@ class SharedFileController extends Controller
     /**
      * Download a file directly from local storage
      */
-    public function download($token)
+    public function download(string $token): Response
     {
         $sharedFile = SharedFile::where('token', $token)
-            ->where('expires_at', '>', Date::now())
+            ->where('expires_at', '>', now())
             ->first();
 
-        abort_unless($sharedFile, 404, 'File not found or has expired.');
+        abort_unless($sharedFile !== null, 404, 'File not found or has expired.');
 
         $disk = config('filesystems.default');
 
@@ -131,7 +132,7 @@ class SharedFileController extends Controller
     /**
      * Check if current IP is allowed to upload files
      */
-    public function checkIPAccess(Request $request)
+    public function checkIPAccess(Request $request): JsonResponse
     {
         $whitelistConfig = config('app.file_upload_whitelist');
 
@@ -153,13 +154,13 @@ class SharedFileController extends Controller
     /**
      * Get maximum file upload size from PHP configuration
      */
-    public function getMaxFileSize()
+    public function getMaxFileSize(): JsonResponse
     {
         // Get the upload_max_filesize from php.ini and convert to bytes
-        $upload_max_filesize = $this->returnBytes(ini_get('upload_max_filesize'));
+        $upload_max_filesize = $this->returnBytes(ini_get('upload_max_filesize') ?: '0');
 
         // Get the post_max_size from php.ini and convert to bytes
-        $post_max_size = $this->returnBytes(ini_get('post_max_size'));
+        $post_max_size = $this->returnBytes(ini_get('post_max_size') ?: '0');
 
         // Use the smallest of the two values
         $max_size = min($upload_max_filesize, $post_max_size);
@@ -173,9 +174,9 @@ class SharedFileController extends Controller
     /**
      * Convert shorthand size notation to bytes
      */
-    private function returnBytes($val)
+    private function returnBytes(string $val): int
     {
-        $val = trim((string) $val);
+        $val = trim($val);
         $last = strtolower($val[strlen($val) - 1]);
         $val = (int) $val;
 
@@ -194,7 +195,7 @@ class SharedFileController extends Controller
     /**
      * Format bytes to human-readable format
      */
-    private function formatBytes($bytes, $precision = 2)
+    private function formatBytes(int|float $bytes, int $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
@@ -204,6 +205,6 @@ class SharedFileController extends Controller
 
         $bytes /= 1024 ** $pow;
 
-        return round($bytes, $precision) . ' ' . $units[$pow];
+        return round($bytes, $precision) . ' ' . $units[(int) $pow];
     }
 }

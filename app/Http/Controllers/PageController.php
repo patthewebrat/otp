@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\GetsClientIP;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
     use GetsClientIP;
 
-    public function app(Request $request)
+    public function app(Request $request): View
     {
         $whitelistConfig = config('app.file_upload_whitelist');
         $fileUploadAllowed = false;

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\OTP;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Date;
 
 class OTPController extends Controller
 {
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $request->validate([
             'token' => ['required', 'string'],
@@ -17,7 +17,7 @@ class OTPController extends Controller
             'expiry' => ['required', 'integer', 'min:1'],
         ]);
 
-        $expiryTime = Date::now()->addMinutes($request->expiry);
+        $expiryTime = now()->addMinutes($request->expiry);
 
         // Store the Base64-encoded token directly
         $otp = OTP::create([
@@ -31,10 +31,10 @@ class OTPController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function show($tokenBase64)
+    public function show(string $tokenBase64): JsonResponse
     {
         $otp = OTP::where('token', $tokenBase64)
-            ->where('expires_at', '>', Date::now())
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($otp) {
@@ -50,10 +50,10 @@ class OTPController extends Controller
         }
     }
 
-    public function check($token)
+    public function check(string $token): JsonResponse
     {
         $otp = OTP::where('token', $token)
-            ->where('expires_at', '>', Date::now())
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($otp) {
