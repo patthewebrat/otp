@@ -18,13 +18,16 @@ return RectorConfig::configure()
         __DIR__ . '/routes',
         __DIR__ . '/tests',
     ])
+    ->withSkip([
+        __DIR__ . '/bootstrap/cache',
+    ])
     // uncomment to reach your current PHP version
     ->withPhpSets()
     ->withTypeCoverageLevel(3)
     ->withDeadCodeLevel(2)
     ->withCodeQualityLevel(3)
     ->withSets([
-        LaravelLevelSetList::UP_TO_LARAVEL_110,
+        LaravelLevelSetList::UP_TO_LARAVEL_120,
         LaravelSetList::LARAVEL_ARRAYACCESS_TO_METHOD_CALL,
         LaravelSetList::LARAVEL_ARRAY_STR_FUNCTION_TO_STATIC_CALL,
         LaravelSetList::LARAVEL_CODE_QUALITY,
