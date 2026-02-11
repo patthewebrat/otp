@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\SharedFile;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class DeleteExpiredFiles extends Command
 {
@@ -29,21 +29,21 @@ class DeleteExpiredFiles extends Command
     public function handle()
     {
         $expiredFiles = SharedFile::where('expires_at', '<', Carbon::now())->get();
-        
+
         $disk = config('filesystems.default');
         $count = 0;
-        
+
         foreach ($expiredFiles as $file) {
             // Delete the file from configured storage disk
             if (Storage::disk($disk)->exists($file->file_path)) {
                 Storage::disk($disk)->delete($file->file_path);
             }
-            
+
             // Delete the record from the database
             $file->delete();
             $count++;
         }
-        
+
         $this->info("Deleted {$count} expired shared files.");
         return Command::SUCCESS;
     }

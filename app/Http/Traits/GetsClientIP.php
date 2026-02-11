@@ -14,7 +14,7 @@ trait GetsClientIP
         if (config('app.use_cloudflare_ip') && $request->hasHeader('CF-Connecting-IP')) {
             return $request->header('CF-Connecting-IP');
         }
-        
+
         return $request->ip();
     }
 }

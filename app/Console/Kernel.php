@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // Delete expired OTPs
         $schedule->command('otps:delete-expired')->hourly();
-        
+
         // Delete expired shared files
         $schedule->command('files:delete-expired')->hourly();
     }
@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

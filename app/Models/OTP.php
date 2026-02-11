@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class OTP extends Model
 {
-
     protected $guarded = [];
+
     protected $table = 'otps';
 
     use HasFactory;

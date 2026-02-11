@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\OTP;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OTPController extends Controller
 {
