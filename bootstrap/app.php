@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckFileUploadIP;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'check.file.upload.ip' => CheckFileUploadIP::class,
+        ]);
+
+        $middleware->append(SecurityHeaders::class);
+
+        $middleware->api(prepend: [
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -99,8 +99,7 @@
         </div>
 
         <div v-else-if="state === 'ready'">
-            <p>This file will be deleted after it's downloaded.</p>
-            <p v-if="fileInfo">File: {{ fileInfo.fileName }} ({{ fileInfo.fileSize }})</p>
+            <p>A file has been shared with you. It will be deleted after it's downloaded.</p>
             <button @click="downloadFile">Download file</button>
         </div>
 
@@ -415,25 +414,12 @@ const copyToClipboard = async (text) => {
 };
 
 const checkFileExists = async () => {
-    const { tokenBase64, encryptionKeyBase64 } = getTokenAndKeyFromFragment();
+    const { tokenBase64 } = getTokenAndKeyFromFragment();
 
     try {
         const response = await axios.get(`/api/file/check/${tokenBase64}`);
 
         if (response.data.exists) {
-            // Decrypt the filename for display
-            // Prefer new iv_name/ivName if present; fallback to legacy iv
-            const ivNameBase64 = response.data.ivName || response.data.iv_name || response.data.iv;
-            const decryptedFileName = await decryptFileName(
-                response.data.fileName,
-                ivNameBase64,
-                encryptionKeyBase64
-            );
-            
-            fileInfo.value = {
-                fileName: decryptedFileName,
-                fileSize: response.data.fileSize
-            };
             state.value = 'ready';
         } else {
             state.value = 'not-found';

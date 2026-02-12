@@ -14,7 +14,7 @@ class OTPController extends Controller
             'token' => ['required', 'string'],
             'encryptedPassword' => ['required', 'string'],
             'iv' => ['required', 'string'],
-            'expiry' => ['required', 'integer', 'min:1'],
+            'expiry' => ['required', 'integer', 'min:1', 'max:43200'],
         ]);
 
         $expiryTime = now()->addMinutes($request->expiry);

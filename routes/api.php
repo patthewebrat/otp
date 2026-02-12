@@ -9,7 +9,7 @@ Route::get('/user', fn (Request $request) => $request->user())->middleware('auth
 
 // Password OTP routes
 Route::post('/create', [OTPController::class, 'create']);
-Route::get('/{combinedKey}', [OTPController::class, 'show']);
+Route::get('/{combinedKey}', [OTPController::class, 'show'])->where('combinedKey', '[A-Za-z0-9_-]+');
 Route::get('/check/{combinedKey}', [OTPController::class, 'check']);
 
 // Shared file routes

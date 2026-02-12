@@ -17,14 +17,14 @@ class SharedFileController extends Controller
     {
         $request->validate([
             'token' => ['required', 'string'],
-            'encryptedFile' => ['required', 'file'],
-            'fileName' => ['required', 'string'],
+            'encryptedFile' => ['required', 'file', 'max:102400'],
+            'fileName' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]+$/'],
             'fileSize' => ['required', 'string'],
             // Support new separate IVs, while remaining backward compatible
             'iv_file' => ['required_without:iv', 'string'],
             'iv_name' => ['required_without:iv', 'string'],
             'iv' => ['required_without_all:iv_file,iv_name', 'string'],
-            'expiry' => ['required', 'integer', 'min:1'],
+            'expiry' => ['required', 'integer', 'min:1', 'max:43200'],
         ]);
 
         $expiryTime = now()->addMinutes((int) $request->expiry);
@@ -84,16 +84,7 @@ class SharedFileController extends Controller
             ->first();
 
         if ($sharedFile) {
-            return response()->json([
-                'exists' => true,
-                'fileName' => $sharedFile->file_name,
-                'fileSize' => $sharedFile->file_size,
-                // Legacy single IV (file IV)
-                'iv' => $sharedFile->iv,
-                // New explicit IVs
-                'ivFile' => $sharedFile->iv_file ?? $sharedFile->iv,
-                'ivName' => $sharedFile->iv_name ?? $sharedFile->iv,
-            ]);
+            return response()->json(['exists' => true]);
         } else {
             return response()->json(['exists' => false, 'message' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.']);
         }
@@ -123,10 +114,13 @@ class SharedFileController extends Controller
         // Delete the database record
         $sharedFile->delete();
 
+        // Sanitize filename for Content-Disposition header (strip any non-base64url chars)
+        $safeFileName = preg_replace('/[^A-Za-z0-9_-]/', '', $sharedFile->file_name);
+
         // Return the file contents as a download response
         return response($fileContents)
             ->header('Content-Type', 'application/octet-stream')
-            ->header('Content-Disposition', 'attachment; filename="' . $sharedFile->file_name . '"');
+            ->header('Content-Disposition', 'attachment; filename="' . $safeFileName . '"');
     }
 
     /**
