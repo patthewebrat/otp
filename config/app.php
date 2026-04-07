@@ -69,6 +69,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Maximum File Upload Size
+    |--------------------------------------------------------------------------
+    |
+    | Maximum file upload size in bytes for the file sharing feature.
+    | With direct S3 uploads this is no longer limited by PHP's
+    | upload_max_filesize. Default: 500MB (524288000 bytes).
+    |
+    */
+
+    'max_file_upload_size' => (int) env('MAX_FILE_UPLOAD_SIZE', 10737418240),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

@@ -8,11 +8,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SharedFileController extends Controller
 {
     use GetsClientIP;
 
+    /**
+     * Legacy upload endpoint — streams file through the server.
+     * Kept for local development and backward compatibility.
+     */
     public function create(Request $request): JsonResponse
     {
         $request->validate([
@@ -20,7 +25,6 @@ class SharedFileController extends Controller
             'encryptedFile' => ['required', 'file', 'max:102400'],
             'fileName' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]+$/'],
             'fileSize' => ['required', 'string'],
-            // Support new separate IVs, while remaining backward compatible
             'iv_file' => ['required_without:iv', 'string'],
             'iv_name' => ['required_without:iv', 'string'],
             'iv' => ['required_without_all:iv_file,iv_name', 'string'],
@@ -29,20 +33,17 @@ class SharedFileController extends Controller
 
         $expiryTime = now()->addMinutes((int) $request->expiry);
 
-        // Use configured storage disk
         $disk = config('filesystems.default');
         $filePath = $request->file('encryptedFile')->store('encrypted-files', $disk);
 
-        // Determine IVs with fallback to legacy 'iv'
         $ivFile = $request->input('iv_file', $request->input('iv'));
         $ivName = $request->input('iv_name', $request->input('iv'));
 
-        $sharedFile = SharedFile::create([
+        SharedFile::create([
             'token' => $request->token,
             'file_path' => $filePath,
             'file_name' => $request->fileName,
             'file_size' => $request->fileSize,
-            // Keep legacy iv populated for backward compatibility
             'iv' => $ivFile,
             'iv_file' => $ivFile,
             'iv_name' => $ivName,
@@ -52,29 +53,89 @@ class SharedFileController extends Controller
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Generate a presigned S3 URL for direct browser upload.
+     * Creates the DB record upfront; expired-file cleanup handles orphans.
+     */
+    public function uploadUrl(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => ['required', 'string'],
+            'fileName' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'fileSize' => ['required', 'string'],
+            'iv_file' => ['required_without:iv', 'string'],
+            'iv_name' => ['required_without:iv', 'string'],
+            'iv' => ['required_without_all:iv_file,iv_name', 'string'],
+            'expiry' => ['required', 'integer', 'min:1', 'max:43200'],
+        ]);
+
+        $disk = config('filesystems.default');
+
+        if ($disk !== 's3') {
+            return response()->json(['directUpload' => false]);
+        }
+
+        $filePath = 'encrypted-files/' . Str::uuid();
+        $expiryTime = now()->addMinutes((int) $request->expiry);
+
+        $ivFile = $request->input('iv_file', $request->input('iv'));
+        $ivName = $request->input('iv_name', $request->input('iv'));
+
+        SharedFile::create([
+            'token' => $request->token,
+            'file_path' => $filePath,
+            'file_name' => $request->fileName,
+            'file_size' => $request->fileSize,
+            'iv' => $ivFile,
+            'iv_file' => $ivFile,
+            'iv_name' => $ivName,
+            'expires_at' => $expiryTime,
+        ]);
+
+        $result = Storage::disk('s3')->temporaryUploadUrl(
+            $filePath,
+            now()->addMinutes(30),
+            ['ContentType' => 'application/octet-stream']
+        );
+
+        return response()->json([
+            'directUpload' => true,
+            'uploadUrl' => $result['url'],
+            'headers' => $result['headers'],
+        ]);
+    }
+
     public function show(string $token): JsonResponse
     {
         $sharedFile = SharedFile::where('token', $token)
             ->where('expires_at', '>', now())
             ->first();
 
-        if ($sharedFile) {
-            // Always use server-side proxy download regardless of storage provider
-            $fileUrl = url('/download-file/' . $sharedFile->token);
-
-            return response()->json([
-                'fileUrl' => $fileUrl,
-                'fileName' => $sharedFile->file_name,
-                'fileSize' => $sharedFile->file_size,
-                // Legacy single IV (file IV)
-                'iv' => $sharedFile->iv,
-                // New explicit IVs
-                'ivFile' => $sharedFile->iv_file ?? $sharedFile->iv,
-                'ivName' => $sharedFile->iv_name ?? $sharedFile->iv,
-            ]);
-        } else {
+        if (!$sharedFile) {
             return response()->json(['error' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.'], 404);
         }
+
+        $disk = config('filesystems.default');
+
+        // Use presigned S3 URL for direct download when available
+        if ($disk === 's3') {
+            $fileUrl = Storage::disk('s3')->temporaryUrl(
+                $sharedFile->file_path,
+                now()->addMinutes(10)
+            );
+        } else {
+            $fileUrl = url('/download-file/' . $sharedFile->token);
+        }
+
+        return response()->json([
+            'fileUrl' => $fileUrl,
+            'fileName' => $sharedFile->file_name,
+            'fileSize' => $sharedFile->file_size,
+            'iv' => $sharedFile->iv,
+            'ivFile' => $sharedFile->iv_file ?? $sharedFile->iv,
+            'ivName' => $sharedFile->iv_name ?? $sharedFile->iv,
+            'directDownload' => $disk === 's3',
+        ]);
     }
 
     public function check(string $token): JsonResponse
@@ -124,6 +185,29 @@ class SharedFileController extends Controller
     }
 
     /**
+     * Delete the file from storage and the database after successful download.
+     * Called by the frontend once it has finished downloading and decrypting.
+     */
+    public function destroy(string $token): JsonResponse
+    {
+        $sharedFile = SharedFile::where('token', $token)->first();
+
+        if (!$sharedFile) {
+            return response()->json(['success' => true]);
+        }
+
+        $disk = config('filesystems.default');
+
+        if (Storage::disk($disk)->exists($sharedFile->file_path)) {
+            Storage::disk($disk)->delete($sharedFile->file_path);
+        }
+
+        $sharedFile->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Check if current IP is allowed to upload files
      */
     public function checkIPAccess(Request $request): JsonResponse
@@ -146,18 +230,21 @@ class SharedFileController extends Controller
     }
 
     /**
-     * Get maximum file upload size from PHP configuration
+     * Get maximum file upload size.
+     * When using direct S3 uploads the limit comes from config rather than PHP ini.
      */
     public function getMaxFileSize(): JsonResponse
     {
-        // Get the upload_max_filesize from php.ini and convert to bytes
-        $upload_max_filesize = $this->returnBytes(ini_get('upload_max_filesize') ?: '0');
+        $disk = config('filesystems.default');
 
-        // Get the post_max_size from php.ini and convert to bytes
-        $post_max_size = $this->returnBytes(ini_get('post_max_size') ?: '0');
-
-        // Use the smallest of the two values
-        $max_size = min($upload_max_filesize, $post_max_size);
+        if ($disk === 's3') {
+            $max_size = config('app.max_file_upload_size');
+        } else {
+            // Local storage — still limited by PHP ini
+            $upload_max_filesize = $this->returnBytes(ini_get('upload_max_filesize') ?: '0');
+            $post_max_size = $this->returnBytes(ini_get('post_max_size') ?: '0');
+            $max_size = min($upload_max_filesize, $post_max_size);
+        }
 
         return response()->json([
             'max_size' => $max_size,

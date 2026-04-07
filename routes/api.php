@@ -14,7 +14,9 @@ Route::get('/check/{combinedKey}', [OTPController::class, 'check']);
 
 // Shared file routes
 Route::post('/file/create', [SharedFileController::class, 'create'])->middleware('check.file.upload.ip');
+Route::post('/file/upload-url', [SharedFileController::class, 'uploadUrl'])->middleware('check.file.upload.ip');
 Route::get('/file/max-size', [SharedFileController::class, 'getMaxFileSize'])->middleware('check.file.upload.ip');
 Route::get('/file/ip-access', [SharedFileController::class, 'checkIPAccess']);
 Route::get('/file/check/{token}', [SharedFileController::class, 'check']);
 Route::get('/file/{token}', [SharedFileController::class, 'show']);
+Route::delete('/file/{token}', [SharedFileController::class, 'destroy']);

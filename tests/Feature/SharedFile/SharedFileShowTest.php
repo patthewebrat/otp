@@ -32,14 +32,25 @@ class SharedFileShowTest extends TestCase
         ]);
     }
 
-    public function test_file_url_contains_download_path(): void
+    public function test_file_url_is_returned(): void
     {
         SharedFile::factory()->create(['token' => 'url-token']);
 
         $response = $this->getJson('/api/file/url-token');
 
-        $response->assertOk();
-        $this->assertStringContains('/download-file/url-token', $response->json('fileUrl'));
+        $response->assertOk()
+            ->assertJsonStructure(['fileUrl', 'directDownload']);
+
+        $fileUrl = $response->json('fileUrl');
+        $directDownload = $response->json('directDownload');
+
+        if ($directDownload) {
+            // S3 presigned URL
+            $this->assertStringStartsWith('https://', $fileUrl);
+        } else {
+            // Server proxy URL
+            $this->assertStringContains('/download-file/url-token', $fileUrl);
+        }
     }
 
     public function test_returns_404_for_missing_token(): void

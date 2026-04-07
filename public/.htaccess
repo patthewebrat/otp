@@ -27,7 +27,7 @@
     style-src 'self' fonts.googleapis.com cdnjs.cloudflare.com otp.indulge.digital; \
     img-src 'self' data: blob: indulge.digital otp.indulge.digital; \
     font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com data:; \
-    connect-src 'self' otp.indulge.digital; \
+    connect-src 'self' otp.indulge.digital https://ot-file-share.s3.eu-west-1.amazonaws.com; \
     object-src 'none'; \
     base-uri 'self'; \
     form-action 'self'; \

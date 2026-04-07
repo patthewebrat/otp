@@ -3,15 +3,15 @@
         <h1>{{ pageTitle }}</h1>
 
         <div v-if="state === 'loading'">
-            <div v-if="progressStage === 'encrypting' && encryptionProgress > 0" class="progress-container">
-                <p class="progress-label">Encrypting file...</p>
+            <div v-if="(progressStage === 'encrypting' || progressStage === 'decrypting') && encryptionProgress > 0" class="progress-container">
+                <p class="progress-label">{{ progressStage === 'decrypting' ? 'Decrypting file...' : 'Encrypting file...' }}</p>
                 <div class="progress-bar">
                     <div class="progress" :style="{ width: encryptionProgress + '%' }"></div>
                     <span>{{ encryptionProgress }}%</span>
                 </div>
             </div>
-            <div v-if="progressStage === 'uploading' && uploadProgress > 0" class="progress-container">
-                <p class="progress-label">Uploading to server...</p>
+            <div v-if="(progressStage === 'uploading' || progressStage === 'downloading') && uploadProgress > 0" class="progress-container">
+                <p class="progress-label">{{ progressStage === 'downloading' ? 'Downloading file...' : 'Uploading file...' }}</p>
                 <div class="progress-bar">
                     <div class="progress" :style="{ width: uploadProgress + '%' }"></div>
                     <span>{{ uploadProgress }}%</span>
@@ -157,14 +157,6 @@ const route = useRoute();
 const { hasFileUploadAccess, checkFileUploadAccess } = useIPAccess();
 
 onMounted(async () => {
-    // Check IP access first for file upload features
-    const hasUploadAccess = await checkFileUploadAccess();
-    if (!hasUploadAccess && !getTokenAndKeyFromFragment().tokenBase64) {
-        // If no upload access and not accessing a file, show not found
-        state.value = 'not-found';
-        return;
-    }
-    
     await fetchMaxFileSize();
     await initializeState();
 });
@@ -231,7 +223,13 @@ async function initializeState() {
         state.value = 'loading';
         await checkFileExists();
     } else {
-        state.value = 'input';
+        // Only show the upload form if the user has upload access
+        const hasAccess = await checkFileUploadAccess();
+        if (hasAccess) {
+            state.value = 'input';
+        } else {
+            state.value = 'not-found';
+        }
     }
 }
 
@@ -289,32 +287,63 @@ const submitFile = async () => {
         
         // Generate a token for this file
         const tokenBase64 = generateToken();
-        
-        // Create a FormData object to send the file
-        const formData = new FormData();
-        formData.append('token', tokenBase64);
-        formData.append('encryptedFile', encryptedFileBlob, 'encrypted-file');
-        formData.append('fileName', encryptedFileName);
-        formData.append('fileSize', formatFileSize(selectedFile.value.size));
-        // New fields with separate IVs
-        formData.append('iv_file', ivFileBase64);
-        formData.append('iv_name', ivNameBase64);
-        // Backward-compat: include legacy single IV as the file IV
-        formData.append('iv', ivFileBase64);
-        formData.append('expiry', Number(expiry.value));
-        
-        // Upload the encrypted file with progress tracking
-        await axios.post('/api/file/create', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: (progressEvent) => {
-                if (progressEvent.total) {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    uploadProgress.value = percentCompleted;
+
+        const metadata = {
+            token: tokenBase64,
+            fileName: encryptedFileName,
+            fileSize: formatFileSize(selectedFile.value.size),
+            iv_file: ivFileBase64,
+            iv_name: ivNameBase64,
+            iv: ivFileBase64,
+            expiry: Number(expiry.value),
+        };
+
+        // Try direct S3 upload first, fall back to server proxy
+        const urlResponse = await axios.post('/api/file/upload-url', metadata);
+
+        if (urlResponse.data.directUpload) {
+            // Upload directly to S3 via presigned URL using fetch
+            // (axios adds CSRF/cookie headers that break the S3 signature)
+            const xhr = new XMLHttpRequest();
+            await new Promise((resolve, reject) => {
+                xhr.open('PUT', urlResponse.data.uploadUrl);
+                // Only set headers that S3 expects — nothing extra
+                const s3Headers = urlResponse.data.headers || {};
+                for (const [key, value] of Object.entries(s3Headers)) {
+                    xhr.setRequestHeader(key, value);
                 }
-            }
-        });
+                xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        uploadProgress.value = Math.round((e.loaded * 100) / e.total);
+                    }
+                };
+                xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error(`S3 upload failed: ${xhr.status}`));
+                xhr.onerror = () => reject(new Error('S3 upload network error'));
+                xhr.send(encryptedFileBlob);
+            });
+        } else {
+            // Fallback: upload through the server (local storage / dev)
+            const formData = new FormData();
+            formData.append('token', tokenBase64);
+            formData.append('encryptedFile', encryptedFileBlob, 'encrypted-file');
+            formData.append('fileName', encryptedFileName);
+            formData.append('fileSize', formatFileSize(selectedFile.value.size));
+            formData.append('iv_file', ivFileBase64);
+            formData.append('iv_name', ivNameBase64);
+            formData.append('iv', ivFileBase64);
+            formData.append('expiry', Number(expiry.value));
+
+            await axios.post('/api/file/create', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        uploadProgress.value = percentCompleted;
+                    }
+                },
+            });
+        }
 
         // Construct the URL with the token and key in the fragment
         generatedUrl.value = `${window.location.origin}/f#${tokenBase64}.${encryptionKeyBase64}`;
@@ -453,24 +482,58 @@ const downloadFile = async () => {
             state.value = 'loading';
             uploadProgress.value = 0;
             encryptionProgress.value = 0;
-            progressStage.value = 'uploading'; // Start with download progress first
+            progressStage.value = 'downloading';
             
-            // Fetch the file details from the server
+            // Fetch the file details (includes presigned S3 URL or proxy URL)
             const response = await axios.get(`/api/file/${tokenBase64}`);
-            
-            // Download the encrypted file from the signed URL
-            const fileResponse = await axios.get(response.data.fileUrl, {
+
+            // Download the encrypted file — URL points directly to S3 or server proxy
+            const downloadConfig = {
                 responseType: 'arraybuffer',
                 onDownloadProgress: (progressEvent) => {
                     if (progressEvent.total) {
                         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                         uploadProgress.value = percentCompleted;
                     }
+                },
+            };
+
+            // For direct S3 downloads, use plain fetch to avoid axios CSRF/cookie headers
+            let fileResponse;
+            if (response.data.directDownload) {
+                const fetchResp = await fetch(response.data.fileUrl);
+                if (!fetchResp.ok) throw new Error('Download failed');
+
+                // Stream the response to track progress
+                const contentLength = +fetchResp.headers.get('Content-Length');
+                const reader = fetchResp.body.getReader();
+                const chunks = [];
+                let received = 0;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    received += value.length;
+                    if (contentLength) {
+                        uploadProgress.value = Math.round((received * 100) / contentLength);
+                    }
                 }
-            });
+
+                // Combine chunks into a single ArrayBuffer
+                const combined = new Uint8Array(received);
+                let pos = 0;
+                for (const chunk of chunks) {
+                    combined.set(chunk, pos);
+                    pos += chunk.length;
+                }
+                fileResponse = { data: combined.buffer };
+            } else {
+                fileResponse = await axios.get(response.data.fileUrl, downloadConfig);
+            }
             
             // Switch to decryption progress
-            progressStage.value = 'encrypting';
+            progressStage.value = 'decrypting';
             encryptionProgress.value = 0;
             
             // Start progress animation for decryption
@@ -517,7 +580,14 @@ const downloadFile = async () => {
             
             // Clean up the blob URL
             URL.revokeObjectURL(downloadUrl);
-            
+
+            // Delete the file from the server now that it's been downloaded
+            try {
+                await axios.delete(`/api/file/${tokenBase64}`);
+            } catch {
+                // Non-critical — expiry cleanup will catch it
+            }
+
             state.value = 'downloaded';
         } catch (error) {
             console.error('Error downloading file:', error);
