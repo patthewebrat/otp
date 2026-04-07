@@ -20,4 +20,4 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
-<!-- Security headers are set in App\Http\Middleware\SecurityHeaders -->
+# Security headers are set in App\Http\Middleware\SecurityHeaders
