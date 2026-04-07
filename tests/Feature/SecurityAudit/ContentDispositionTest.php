@@ -12,7 +12,7 @@ class ContentDispositionTest extends TestCase
     public function test_filename_with_special_characters_is_rejected(): void
     {
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token-123',
+            'token' => 'test-token-1234567',
             'encryptedFile' => \Illuminate\Http\UploadedFile::fake()->create('test.bin', 100),
             'fileName' => 'malicious"file\r\nInjected-Header: value',
             'fileSize' => '100',
@@ -28,7 +28,7 @@ class ContentDispositionTest extends TestCase
     public function test_valid_base64url_filename_is_accepted(): void
     {
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token-456',
+            'token' => 'test-token-4567890',
             'encryptedFile' => \Illuminate\Http\UploadedFile::fake()->create('test.bin', 100),
             'fileName' => 'SGVsbG8gV29ybGQ',
             'fileSize' => '100',
@@ -44,7 +44,7 @@ class ContentDispositionTest extends TestCase
     public function test_filename_with_dots_in_base64url_is_rejected(): void
     {
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token-789',
+            'token' => 'test-token-7890abc',
             'encryptedFile' => \Illuminate\Http\UploadedFile::fake()->create('test.bin', 100),
             'fileName' => 'file.name.with.dots',
             'fileSize' => '100',

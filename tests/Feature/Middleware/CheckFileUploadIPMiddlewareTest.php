@@ -42,7 +42,7 @@ class CheckFileUploadIPMiddlewareTest extends TestCase
         config(['app.file_upload_whitelist' => '10.0.0.50']);
 
         $this->postJson('/api/file/create', [
-            'token' => 'blocked-token',
+            'token' => 'blocked-token-pad',
             'encryptedFile' => UploadedFile::fake()->create('test.bin', 50),
             'fileName' => 'testfile',
             'fileSize' => '51200',

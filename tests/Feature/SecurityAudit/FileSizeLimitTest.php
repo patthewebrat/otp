@@ -16,7 +16,7 @@ class FileSizeLimitTest extends TestCase
         $file = UploadedFile::fake()->create('large.bin', 102401);
 
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedFile' => $file,
             'fileName' => 'SGVsbG8',
             'fileSize' => '102401000',
@@ -34,7 +34,7 @@ class FileSizeLimitTest extends TestCase
         $file = UploadedFile::fake()->create('small.bin', 100);
 
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedFile' => $file,
             'fileName' => 'SGVsbG8',
             'fileSize' => '100000',

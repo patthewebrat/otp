@@ -12,7 +12,7 @@ class ExpiryValidationTest extends TestCase
     public function test_otp_rejects_expiry_exceeding_30_days(): void
     {
         $response = $this->postJson('/api/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedPassword' => 'encrypted-data',
             'iv' => 'iv-value',
             'expiry' => 43201, // 30 days + 1 minute
@@ -25,7 +25,7 @@ class ExpiryValidationTest extends TestCase
     public function test_otp_accepts_max_30_day_expiry(): void
     {
         $response = $this->postJson('/api/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedPassword' => 'encrypted-data',
             'iv' => 'iv-value',
             'expiry' => 43200, // Exactly 30 days
@@ -37,7 +37,7 @@ class ExpiryValidationTest extends TestCase
     public function test_otp_rejects_absurd_expiry(): void
     {
         $response = $this->postJson('/api/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedPassword' => 'encrypted-data',
             'iv' => 'iv-value',
             'expiry' => 999999999,
@@ -50,7 +50,7 @@ class ExpiryValidationTest extends TestCase
     public function test_file_rejects_expiry_exceeding_30_days(): void
     {
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedFile' => \Illuminate\Http\UploadedFile::fake()->create('test.bin', 100),
             'fileName' => 'SGVsbG8',
             'fileSize' => '100',
@@ -66,7 +66,7 @@ class ExpiryValidationTest extends TestCase
     public function test_file_accepts_max_30_day_expiry(): void
     {
         $response = $this->postJson('/api/file/create', [
-            'token' => 'test-token',
+            'token' => 'test-token-padded',
             'encryptedFile' => \Illuminate\Http\UploadedFile::fake()->create('test.bin', 100),
             'fileName' => 'SGVsbG8',
             'fileSize' => '100',

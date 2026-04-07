@@ -21,7 +21,15 @@ class SharedFileFactory extends Factory
             'iv_file' => Str::random(24),
             'iv_name' => Str::random(24),
             'expires_at' => now()->addHour(),
+            'key_hash' => hash('sha256', Str::random(32)),
         ];
+    }
+
+    public function downloaded(): static
+    {
+        return $this->state(fn () => [
+            'downloaded_at' => now(),
+        ]);
     }
 
     public function expired(): static

@@ -133,6 +133,7 @@ import {
     generateIv,
     encodeText,
     decodeText,
+    sha256Hex,
 } from '../utils/crypto';
 
 // Reactive variables
@@ -288,6 +289,9 @@ const submitFile = async () => {
         // Generate a token for this file
         const tokenBase64 = generateToken();
 
+        // Hash the encryption key for server-side ownership verification
+        const keyHash = await sha256Hex(encryptionKeyBase64);
+
         const metadata = {
             token: tokenBase64,
             fileName: encryptedFileName,
@@ -296,6 +300,7 @@ const submitFile = async () => {
             iv_name: ivNameBase64,
             iv: ivFileBase64,
             expiry: Number(expiry.value),
+            key_hash: keyHash,
         };
 
         // Try direct S3 upload first, fall back to server proxy
@@ -333,6 +338,7 @@ const submitFile = async () => {
             formData.append('iv_name', ivNameBase64);
             formData.append('iv', ivFileBase64);
             formData.append('expiry', Number(expiry.value));
+            formData.append('key_hash', keyHash);
 
             await axios.post('/api/file/create', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -583,7 +589,10 @@ const downloadFile = async () => {
 
             // Delete the file from the server now that it's been downloaded
             try {
-                await axios.delete(`/api/file/${tokenBase64}`);
+                const keyHash = await sha256Hex(encryptionKeyBase64);
+                await axios.delete(`/api/file/${tokenBase64}`, {
+                    data: { key_hash: keyHash },
+                });
             } catch {
                 // Non-critical — expiry cleanup will catch it
             }

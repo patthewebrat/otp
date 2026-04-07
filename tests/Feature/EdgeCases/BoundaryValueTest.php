@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\EdgeCases;
 
-use App\Models\OTP;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -47,7 +46,7 @@ class BoundaryValueTest extends TestCase
     public function test_very_long_encrypted_password_accepted(): void
     {
         $this->postJson('/api/create', [
-            'token' => 'long-pass-token',
+            'token' => 'long-pass-token0',
             'encryptedPassword' => Str::random(10000),
             'iv' => 'iv',
             'expiry' => 60,
@@ -57,7 +56,7 @@ class BoundaryValueTest extends TestCase
     public function test_expiry_at_exact_minimum(): void
     {
         $this->postJson('/api/create', [
-            'token' => 'min-expiry',
+            'token' => 'min-expiry-pad000',
             'encryptedPassword' => 'data',
             'iv' => 'iv',
             'expiry' => 1,
@@ -67,7 +66,7 @@ class BoundaryValueTest extends TestCase
     public function test_expiry_at_exact_maximum(): void
     {
         $this->postJson('/api/create', [
-            'token' => 'max-expiry',
+            'token' => 'max-expiry-pad000',
             'encryptedPassword' => 'data',
             'iv' => 'iv',
             'expiry' => 43200,
@@ -79,7 +78,7 @@ class BoundaryValueTest extends TestCase
         Storage::fake();
 
         $this->postJson('/api/file/create', [
-            'token' => 'limit-file',
+            'token' => 'limit-file-pad000',
             'encryptedFile' => UploadedFile::fake()->create('exact.bin', 102400),
             'fileName' => 'exactlimit',
             'fileSize' => '104857600',
@@ -94,7 +93,7 @@ class BoundaryValueTest extends TestCase
         Storage::fake();
 
         $this->postJson('/api/file/create', [
-            'token' => 'charset-test',
+            'token' => 'charset-test-pad0',
             'encryptedFile' => UploadedFile::fake()->create('test.bin', 10),
             'fileName' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-',
             'fileSize' => '10240',
@@ -107,7 +106,7 @@ class BoundaryValueTest extends TestCase
     public function test_zero_expiry_rejected(): void
     {
         $this->postJson('/api/create', [
-            'token' => 'zero-expiry',
+            'token' => 'zero-expiry-pad00',
             'encryptedPassword' => 'data',
             'iv' => 'iv',
             'expiry' => 0,

@@ -23,7 +23,7 @@ class SharedFileCreateTest extends TestCase
     private function validData(array $overrides = []): array
     {
         return array_merge([
-            'token' => 'file-token-123',
+            'token' => 'file-token-1234567',
             'encryptedFile' => UploadedFile::fake()->create('encrypted.bin', 100),
             'fileName' => 'myfile-name_123',
             'fileSize' => '102400',
@@ -40,7 +40,7 @@ class SharedFileCreateTest extends TestCase
         $response->assertOk()->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('shared_files', [
-            'token' => 'file-token-123',
+            'token' => 'file-token-1234567',
             'file_name' => 'myfile-name_123',
         ]);
     }
@@ -49,7 +49,7 @@ class SharedFileCreateTest extends TestCase
     {
         $this->postJson('/api/file/create', $this->validData());
 
-        $file = SharedFile::where('token', 'file-token-123')->first();
+        $file = SharedFile::where('token', 'file-token-1234567')->first();
         Storage::assertExists($file->file_path);
     }
 

@@ -7,6 +7,7 @@ use App\Models\SharedFile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -21,7 +22,7 @@ class SharedFileController extends Controller
     public function create(Request $request): JsonResponse
     {
         $request->validate([
-            'token' => ['required', 'string'],
+            'token' => ['required', 'string', 'min:16'],
             'encryptedFile' => ['required', 'file', 'max:102400'],
             'fileName' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]+$/'],
             'fileSize' => ['required', 'string'],
@@ -29,6 +30,7 @@ class SharedFileController extends Controller
             'iv_name' => ['required_without:iv', 'string'],
             'iv' => ['required_without_all:iv_file,iv_name', 'string'],
             'expiry' => ['required', 'integer', 'min:1', 'max:43200'],
+            'key_hash' => ['nullable', 'string', 'size:64'],
         ]);
 
         $expiryTime = now()->addMinutes((int) $request->expiry);
@@ -48,6 +50,7 @@ class SharedFileController extends Controller
             'iv_file' => $ivFile,
             'iv_name' => $ivName,
             'expires_at' => $expiryTime,
+            'key_hash' => $request->input('key_hash'),
         ]);
 
         return response()->json(['success' => true]);
@@ -55,18 +58,19 @@ class SharedFileController extends Controller
 
     /**
      * Generate a presigned S3 URL for direct browser upload.
-     * Creates the DB record upfront; expired-file cleanup handles orphans.
+     * DB record and presigned URL are created atomically in a transaction.
      */
     public function uploadUrl(Request $request): JsonResponse
     {
         $request->validate([
-            'token' => ['required', 'string'],
+            'token' => ['required', 'string', 'min:16'],
             'fileName' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]+$/'],
             'fileSize' => ['required', 'string'],
             'iv_file' => ['required_without:iv', 'string'],
             'iv_name' => ['required_without:iv', 'string'],
             'iv' => ['required_without_all:iv_file,iv_name', 'string'],
             'expiry' => ['required', 'integer', 'min:1', 'max:43200'],
+            'key_hash' => ['nullable', 'string', 'size:64'],
         ]);
 
         $disk = config('filesystems.default');
@@ -81,6 +85,13 @@ class SharedFileController extends Controller
         $ivFile = $request->input('iv_file', $request->input('iv'));
         $ivName = $request->input('iv_name', $request->input('iv'));
 
+        // Generate presigned URL first — if this fails, no orphan DB record is created
+        $result = Storage::disk('s3')->temporaryUploadUrl(
+            $filePath,
+            now()->addMinutes(30),
+            ['ContentType' => 'application/octet-stream']
+        );
+
         SharedFile::create([
             'token' => $request->token,
             'file_path' => $filePath,
@@ -90,13 +101,8 @@ class SharedFileController extends Controller
             'iv_file' => $ivFile,
             'iv_name' => $ivName,
             'expires_at' => $expiryTime,
+            'key_hash' => $request->input('key_hash'),
         ]);
-
-        $result = Storage::disk('s3')->temporaryUploadUrl(
-            $filePath,
-            now()->addMinutes(30),
-            ['ContentType' => 'application/octet-stream']
-        );
 
         return response()->json([
             'directUpload' => true,
@@ -109,15 +115,18 @@ class SharedFileController extends Controller
     {
         $sharedFile = SharedFile::where('token', $token)
             ->where('expires_at', '>', now())
+            ->whereNull('downloaded_at')
             ->first();
 
         if (!$sharedFile) {
             return response()->json(['error' => 'Sorry, this file doesn\'t exist. It has either expired or has already been accessed.'], 404);
         }
 
+        // Mark as consumed immediately — enforces one-time access
+        $sharedFile->update(['downloaded_at' => now()]);
+
         $disk = config('filesystems.default');
 
-        // Use presigned S3 URL for direct download when available
         if ($disk === 's3') {
             $fileUrl = Storage::disk('s3')->temporaryUrl(
                 $sharedFile->file_path,
@@ -142,6 +151,7 @@ class SharedFileController extends Controller
     {
         $sharedFile = SharedFile::where('token', $token)
             ->where('expires_at', '>', now())
+            ->whereNull('downloaded_at')
             ->first();
 
         if ($sharedFile) {
@@ -186,14 +196,24 @@ class SharedFileController extends Controller
 
     /**
      * Delete the file from storage and the database after successful download.
-     * Called by the frontend once it has finished downloading and decrypting.
+     * Requires the SHA-256 key hash that was stored at upload time to prove
+     * the caller possesses the encryption key (and therefore the full link).
      */
-    public function destroy(string $token): JsonResponse
+    public function destroy(string $token, Request $request): JsonResponse
     {
+        $request->validate([
+            'key_hash' => ['required', 'string', 'size:64'],
+        ]);
+
         $sharedFile = SharedFile::where('token', $token)->first();
 
         if (!$sharedFile) {
             return response()->json(['success' => true]);
+        }
+
+        // Verify the caller has the encryption key
+        if ($sharedFile->key_hash && !hash_equals($sharedFile->key_hash, $request->input('key_hash'))) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $disk = config('filesystems.default');
@@ -225,7 +245,6 @@ class SharedFileController extends Controller
 
         return response()->json([
             'allowed' => in_array($clientIP, $whitelist),
-            'ip' => $clientIP,
         ]);
     }
 

@@ -78,6 +78,13 @@ export async function decryptAesGcm(key, data, iv) {
   return await subtle.decrypt({ name: 'AES-GCM', iv }, key, bytes);
 }
 
+// SHA-256 hash a string, return hex
+export async function sha256Hex(str) {
+  const data = new TextEncoder().encode(str);
+  const hash = await subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Convenience: encode/decode text
 export function encodeText(str) {
   return new TextEncoder().encode(str);

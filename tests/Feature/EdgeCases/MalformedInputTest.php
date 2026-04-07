@@ -34,7 +34,7 @@ class MalformedInputTest extends TestCase
     public function test_string_for_integer_field(): void
     {
         $this->postJson('/api/create', [
-            'token' => 'string-test',
+            'token' => 'string-test-pad00',
             'encryptedPassword' => 'data',
             'iv' => 'iv',
             'expiry' => 'not-a-number',
@@ -47,7 +47,7 @@ class MalformedInputTest extends TestCase
         config(['app.file_upload_whitelist' => '']);
 
         $this->postJson('/api/file/create', [
-            'token' => 'not-file-token',
+            'token' => 'not-file-token-pad',
             'encryptedFile' => 'not-a-file',
             'fileName' => 'testfile',
             'fileSize' => '1024',
@@ -69,7 +69,7 @@ class MalformedInputTest extends TestCase
         config(['app.file_upload_whitelist' => '']);
 
         $this->postJson('/api/file/create', [
-            'token' => 'no-iv-token',
+            'token' => 'no-iv-token-pad00',
             'encryptedFile' => UploadedFile::fake()->create('test.bin', 10),
             'fileName' => 'testfile',
             'fileSize' => '10240',

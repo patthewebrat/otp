@@ -42,13 +42,13 @@ class SharedFileIPAccessTest extends TestCase
         $response->assertOk()->assertJson(['allowed' => false]);
     }
 
-    public function test_response_includes_ip_when_whitelist_configured(): void
+    public function test_response_does_not_expose_ip(): void
     {
         config(['app.file_upload_whitelist' => '127.0.0.1']);
 
         $response = $this->getJson('/api/file/ip-access');
 
         $response->assertOk();
-        $this->assertArrayHasKey('ip', $response->json());
+        $this->assertArrayNotHasKey('ip', $response->json());
     }
 }

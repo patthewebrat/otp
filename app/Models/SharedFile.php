@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class SharedFile extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'token',
         'file_path',
@@ -17,6 +18,8 @@ class SharedFile extends Model
         'iv_file',
         'iv_name',
         'expires_at',
+        'downloaded_at',
+        'key_hash',
     ];
 
     protected $hidden = [
@@ -24,12 +27,14 @@ class SharedFile extends Model
         'iv',
         'iv_file',
         'iv_name',
+        'key_hash',
     ];
 
     protected function casts(): array
     {
         return [
             'expires_at' => 'datetime',
+            'downloaded_at' => 'datetime',
         ];
     }
 }
