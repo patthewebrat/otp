@@ -62,4 +62,5 @@ class OTPController extends Controller
             return response()->json(['exists' => false, 'message' => 'Sorry, this password doesn\'t exist. It has either expired or has already been accessed.']);
         }
     }
+    
 }
