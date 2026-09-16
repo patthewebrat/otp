@@ -69,8 +69,7 @@ defineExpose({
 <style scoped>
 /* Navigation styles moved from app.scss to be component-scoped */
 .main-nav {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     margin-bottom: 2rem;
 }
 
@@ -78,23 +77,30 @@ defineExpose({
     max-width: 1000px; /* $content-max-width */
     margin: 0 auto;
     display: flex;
-    gap: 1rem;
+    gap: 2rem;
 }
 
 .nav-item {
     color: #fff; /* $primary-color */
+    font-family: 'Montserrat', sans-serif; /* $font-family-heading */
+    font-weight: 500;
     text-decoration: none;
     opacity: 0.7; /* $opacity-inactive */
-    transition: opacity 0.3s; /* $transition-speed */
+    transition: opacity 0.3s, color 0.3s, border-color 0.3s; /* $transition-speed */
     font-size: 1em; /* $font-size-base */
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; /* sit the active underline over the hairline */
 }
 
 .nav-item:hover {
     opacity: 1; /* $opacity-active */
+    color: #F27AA5; /* $ind-pink */
 }
 
 .nav-item.router-link-active {
     opacity: 1; /* $opacity-active */
-    font-weight: 600;
+    color: #F27AA5; /* $ind-pink */
+    border-bottom-color: #F27AA5; /* $ind-pink */
 }
 </style>

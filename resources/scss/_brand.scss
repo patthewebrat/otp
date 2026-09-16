@@ -1,0 +1,29 @@
+/* Indulge Digital brand tokens
+   Source: Indulge Brand Book V1 (2025-12-11), Uber > Marketing > Brand > Brand Guidelines.
+   Logo files: public/images/brand/ */
+
+/* Primary colours */
+$ind-blue:         #183159; /* anchor navy - trust, credibility */
+$ind-dark-blue:    #00103D;
+$ind-sky-blue:     #27B4D2;
+$ind-med-blue:     #91D8E7;
+$ind-light-blue:   #D3EFF5;
+$ind-pink:         #F27AA5; /* confidence, modern approach */
+$ind-med-pink:     #F0A7C4;
+$ind-light-pink:   #FBE5EE;
+$ind-orange:       #F57E21; /* momentum, innovation */
+$ind-med-orange:   #F8BC8F;
+$ind-light-orange: #FAE9DB;
+
+/* Gradients - all run from a colour to $ind-dark-blue */
+$ind-gradient-hero:   linear-gradient(135deg, $ind-sky-blue 0%, $ind-dark-blue 50%, $ind-pink 100%);
+$ind-gradient-pink:   linear-gradient(180deg, $ind-pink 0%, $ind-dark-blue 100%);
+$ind-gradient-blue:   linear-gradient(180deg, $ind-sky-blue 0%, $ind-dark-blue 100%);
+$ind-gradient-orange: linear-gradient(180deg, $ind-orange 0%, $ind-dark-blue 100%);
+
+/* Typography
+   Montserrat: headlines and large highlighted text.
+   Raleway: body text and captions.
+   Set leading about 4pt above the type size. */
+$ind-font-heading: 'Montserrat', sans-serif;
+$ind-font-body:    'Raleway', sans-serif;

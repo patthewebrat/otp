@@ -1,16 +1,28 @@
-/* Theme Variables */
-$background-color: #181818;
-$app-background-color: #49346A;
+@import 'brand';
+
+/* Theme Variables
+   Indulge Digital brand, Development and Technology sub-brand (pink).
+   Palette tokens live in _brand.scss. */
+$background-color: $ind-dark-blue;
+$app-background-color: $ind-blue;
 $primary-color: #fff;
-$secondary-color: #49346A;
-$accent-color: #7e57c2;
+$secondary-color: $ind-dark-blue;
+$accent-color: $ind-pink;
 $success-color: #4caf50;
 $error-color: #ff5252;
-$warning-color: #ffab40;
-$info-color: #64b5f6;
+$warning-color: $ind-orange;
+$info-color: $ind-sky-blue;
+
+/* Buttons */
+$button-bg: $ind-pink;
+$button-text: $ind-blue; /* not white, not #00103D - softer, still passes contrast */
+
+/* Borders and rules on dark backgrounds */
+$border-subtle: rgba(255, 255, 255, 0.3);
 
 /* Typography */
-$font-family: 'Montserrat', sans-serif;
+$font-family: $ind-font-body;
+$font-family-heading: $ind-font-heading;
 $monospace-font: 'Courier New', monospace;
 $font-size-small: 0.85em;
 $font-size-base: 1em;

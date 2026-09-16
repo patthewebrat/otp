@@ -1,5 +1,5 @@
-/* Import Font */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+/* Import Fonts - Montserrat for headings, Raleway for body (Indulge brand book) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap');
 
 /* Import variables and common styles */
 @import 'variables';
@@ -25,10 +25,15 @@ h1, h2, h3, p {
     margin-bottom: 1rem;
 }
 
+h1, h2, h3 {
+    font-family: $font-family-heading;
+    font-weight: 600;
+}
+
 a {
-    color: $primary-color;
+    color: $accent-color;
     text-decoration: none;
-    
+
     &:hover {
         text-decoration: underline;
     }
@@ -49,28 +54,22 @@ a {
 
 /* Footer */
 footer {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
+    background-color: $ind-dark-blue;
+    padding: 2.5rem 1rem 1rem;
     color: $primary-color;
     font-size: $font-size-small;
-    margin-top: 1rem;
 
     a {
-        color: $primary-color;
+        color: $accent-color;
         text-decoration: underline;
-        
+
         &:hover {
             opacity: $opacity-active;
         }
     }
-    
+
     p {
         max-width: $content-max-width;
         margin: 0 auto 1rem;
-    }
-    
-    img {
-        max-width: 150px;
-        margin-bottom: 1rem;
     }
 }
