@@ -214,4 +214,19 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Session Serialization
+    |--------------------------------------------------------------------------
+    |
+    | This value controls how Laravel serializes session data. JSON is the
+    | default. Set this to "php" to store PHP objects in the session, but
+    | that makes the application open to attack if the APP_KEY leaks.
+    |
+    | Supported: "json", "php"
+    |
+    */
+
+    'serialization' => 'json',
+
 ];

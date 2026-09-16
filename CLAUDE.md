@@ -5,7 +5,7 @@ This is a secure, self-destructing password and file sharing application built w
 
 ## Tech Stack
 - **Frontend**: Vue 3 with Composition API, Vue Router
-- **Backend**: Laravel 11 (PHP 8.2+)
+- **Backend**: Laravel 13 (PHP 8.3+)
 - **Database**: MySQL/PostgreSQL
 - **File Storage**: Amazon S3 with Laravel Flysystem
 - **Build Tools**: Vite, Sass
