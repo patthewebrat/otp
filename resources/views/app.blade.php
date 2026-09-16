@@ -35,6 +35,7 @@
     <p><strong>Access Control:</strong> File upload functionality is restricted to authorized IP addresses. Your current IP has been granted access to upload files.</p>
     @endif
     <p><strong>About:</strong> <a href="https://indulge.digital/blog/i-built-password-sharing-tool-ai-and-here%E2%80%99s-what-i-learnt" target="_blank">Learn about why this tool exists</a>.</p>
+    <p><strong>Source:</strong> This tool is open source. <a href="https://github.com/patthewebrat/otp" target="_blank" rel="noopener">View the code on GitHub</a>.</p>
     <p><strong>Disclaimer:</strong> While we strive to ensure security, we do not guarantee that content cannot be intercepted or misused. Use at your own risk.</p>
     <p><strong>Privacy:</strong> This site does not use cookies, analytics, or tracking tools beyond essential server logs (IP address, URL, timestamp). All content is encrypted before transmission and storage on our servers. The data is only used to provide the content to those you choose to share the link with, and for no other purpose. All stored content is deleted in full from our servers once it has been viewed, or once it has expired.</p>
     <p class="copyright">&copy; {{ date('Y') }} <a href="https://indulge.digital" target="_new">Indulge Media Ltd</a></p>
