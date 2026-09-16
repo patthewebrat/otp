@@ -21,9 +21,20 @@
 
         <div v-else-if="state === 'input'">
             <div class="file-upload">
-                <label for="file-input" class="file-label">
-                    <span v-if="!selectedFile">Choose file to share</span>
-                    <span v-else>{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
+                <label
+                    for="file-input"
+                    class="drop-zone"
+                    :class="{ 'is-dragging': isDragging, 'has-file': selectedFile }"
+                    @dragenter.prevent="onDragEnter"
+                    @dragover.prevent="onDragOver"
+                    @dragleave.prevent="onDragLeave"
+                    @drop.prevent="onDrop"
+                >
+                    <i class="drop-zone-icon" :class="selectedFile ? 'fas fa-file-alt' : 'fas fa-cloud-upload-alt'"></i>
+                    <span v-if="!selectedFile" class="drop-zone-title">Drop a file here</span>
+                    <span v-else class="drop-zone-title">{{ selectedFile.name }}</span>
+                    <span v-if="!selectedFile" class="drop-zone-hint">or click to choose one</span>
+                    <span v-else class="drop-zone-hint">{{ formatFileSize(selectedFile.size) }} &mdash; drop or click to replace</span>
                 </label>
                 <input 
                     type="file" 
@@ -117,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 import { useIPAccess } from '../utils/useIPAccess';
@@ -151,6 +162,7 @@ const fileInfo = ref(null);
 // Default to 10MB, will be updated from server
 const maxFileSize = ref(10 * 1024 * 1024); 
 const fileTooLarge = ref(false);
+const isDragging = ref(false);
 
 const route = useRoute();
 
@@ -158,8 +170,15 @@ const route = useRoute();
 const { hasFileUploadAccess, checkFileUploadAccess } = useIPAccess();
 
 onMounted(async () => {
+    window.addEventListener('dragover', preventWindowDrop);
+    window.addEventListener('drop', preventWindowDrop);
     await fetchMaxFileSize();
     await initializeState();
+});
+
+onUnmounted(() => {
+    window.removeEventListener('dragover', preventWindowDrop);
+    window.removeEventListener('drop', preventWindowDrop);
 });
 
 watch(
@@ -234,8 +253,7 @@ async function initializeState() {
     }
 }
 
-function handleFileSelection(event) {
-    const file = event.target.files[0];
+function setSelectedFile(file) {
     if (file) {
         // Check if file is too large
         if (file.size > maxFileSize.value) {
@@ -249,6 +267,44 @@ function handleFileSelection(event) {
         selectedFile.value = null;
         fileTooLarge.value = false;
     }
+}
+
+function handleFileSelection(event) {
+    setSelectedFile(event.target.files[0]);
+}
+
+// Drag and drop. dragenter/dragleave also fire for child elements, so count
+// the depth rather than toggling a flag, otherwise the highlight flickers.
+let dragDepth = 0;
+
+function onDragEnter() {
+    dragDepth += 1;
+    isDragging.value = true;
+}
+
+function onDragOver(event) {
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy';
+    }
+}
+
+function onDragLeave() {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) {
+        isDragging.value = false;
+    }
+}
+
+function onDrop(event) {
+    dragDepth = 0;
+    isDragging.value = false;
+    setSelectedFile(event.dataTransfer?.files?.[0]);
+}
+
+// A file dropped outside the zone would otherwise make the browser navigate
+// away from the page and lose whatever is in progress.
+function preventWindowDrop(event) {
+    event.preventDefault();
 }
 
 function formatFileSize(bytes) {
@@ -666,9 +722,57 @@ async function decryptFileName(encryptedFileName, ivBase64, encryptionKeyBase64)
     color: white;
 }
 
-/* Override common styles as needed */
-.file-label {
-    margin-top: 0;
+/* Drop zone */
+.drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-align: center;
+    width: 100%;
+    max-width: 500px; /* $form-element-width */
+    padding: 2.5rem 1.5rem;
+    border: 2px dashed rgba(255, 255, 255, 0.3); /* $border-subtle */
+    border-radius: 4px; /* $border-radius */
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #fff; /* $primary-color */
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s; /* $transition-speed */
+}
+
+/* focus-within shows the keyboard ring - the real input is visually hidden */
+.drop-zone:hover,
+.drop-zone:focus-within {
+    border-color: #F27AA5; /* $ind-pink */
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.drop-zone.is-dragging {
+    border-color: #F27AA5; /* $ind-pink */
+    background-color: rgba(242, 122, 165, 0.12);
+}
+
+.drop-zone.has-file {
+    border-style: solid;
+    border-color: rgba(242, 122, 165, 0.5); /* $ind-pink */
+}
+
+.drop-zone-icon {
+    font-size: 1.75rem;
+    color: #F27AA5; /* $ind-pink */
+    margin-bottom: 0.25rem;
+}
+
+.drop-zone-title {
+    font-family: 'Montserrat', sans-serif; /* $font-family-heading */
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.drop-zone-hint {
+    font-size: 0.85em; /* $font-size-small */
+    opacity: 0.7; /* $opacity-inactive */
 }
 
 .file-size-info {
