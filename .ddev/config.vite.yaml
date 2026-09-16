@@ -1,0 +1,7 @@
+# Expose the Vite dev server through ddev-router.
+# https://otp-sharing-app.ddev.site:5173 -> container port 5173
+web_extra_exposed_ports:
+  - name: vite
+    container_port: 5173
+    http_port: 5172
+    https_port: 5173
